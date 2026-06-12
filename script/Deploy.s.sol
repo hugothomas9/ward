@@ -9,6 +9,9 @@ import {StaticRiskModel} from "../src/models/StaticRiskModel.sol";
 import {LinearInterestModel} from "../src/models/LinearInterestModel.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+/// NOTE: STATIC-risk-model variant (StaticRiskModel), kept for comparison/debug. THE production
+/// deployment is `DeployDynamic.s.sol` (dynamic Stylus risk engine — the differentiator).
+///
 /// Deploys Ward against the REAL Robinhood Chain testnet tokens (day-1 verified):
 ///   TSLA  0xC9f9c86933092BbbfFF3CCb4b105A4A94bf3Bd4E (18 dec, transferable)
 ///   USDG  0x7E955252E15c84f5768B83c41a71F9eba181802F (6 dec)
