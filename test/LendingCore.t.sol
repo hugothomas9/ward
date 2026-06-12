@@ -138,6 +138,28 @@ contract LendingCoreTest is Test {
         assertGt(collateral.balanceOf(liq), 0);
     }
 
+    function test_setRiskModelOnlyOwner() public {
+        StaticRiskModel other = new StaticRiskModel(address(this));
+        vm.prank(address(0xBAD));
+        vm.expectRevert();
+        core.setRiskModel(address(other));
+    }
+
+    function test_setRiskModelSwapsModel() public {
+        // a new model with a different threshold changes the health factor
+        StaticRiskModel other = new StaticRiskModel(address(this));
+        other.setThreshold(address(collateral), 5000); // 50% instead of 80%
+        core.setRiskModel(address(other)); // owner = this (deployer)
+        assertEq(address(core.riskModel()), address(other));
+
+        vm.startPrank(alice);
+        core.deposit(10e18); // 2500 value
+        core.borrow(1000e18);
+        vm.stopPrank();
+        // HF = 2500*0.5/1000 = 1.25 (vs 2.0 under the old 80% model)
+        assertEq(core.healthFactor(alice), 1.25e18);
+    }
+
     /// F8: an attacker spamming repayFor(victim, 0) every block must NOT be able to freeze
     /// the victim's interest accrual. With a tiny debt whose per-second interest rounds to
     /// zero, the OLD code reset lastAccrued=now on every poke -> debt never grew. Fixed: the

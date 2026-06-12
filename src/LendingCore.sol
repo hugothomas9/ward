@@ -5,13 +5,14 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IPriceOracle} from "./interfaces/IPriceOracle.sol";
 import {IRiskModel} from "./interfaces/IRiskModel.sol";
 import {IInterestModel} from "./interfaces/IInterestModel.sol";
 
 /// @notice Aave-style single-collateral lending core. Health/threshold behind IRiskModel,
 /// interest behind IInterestModel (so fixed-rate can be added without touching this).
-contract LendingCore is ReentrancyGuard {
+contract LendingCore is ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
 
     IERC20 public immutable collateralToken;
@@ -48,7 +49,7 @@ contract LendingCore is ReentrancyGuard {
         IPriceOracle oracle_,
         IRiskModel risk_,
         IInterestModel interest_
-    ) {
+    ) Ownable(msg.sender) {
         collateralToken = IERC20(collateral_);
         debtToken = IERC20(debt_);
         oracle = oracle_;
@@ -56,6 +57,16 @@ contract LendingCore is ReentrancyGuard {
         interestModel = interest_;
         _collateralScale = 10 ** IERC20Metadata(collateral_).decimals();
         _debtScale = 10 ** IERC20Metadata(debt_).decimals();
+    }
+
+    event RiskModelSet(address indexed riskModel);
+
+    /// @notice F11: swap the risk model (e.g. Static -> Dynamic Stylus engine) without
+    /// redeploying the core. Owner-gated.
+    function setRiskModel(address risk_) external onlyOwner {
+        require(risk_ != address(0), "zero");
+        riskModel = IRiskModel(risk_);
+        emit RiskModelSet(risk_);
     }
 
     // --- lender side (real USDG liquidity) ---
