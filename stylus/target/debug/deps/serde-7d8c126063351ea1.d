@@ -1,0 +1,14 @@
+/Users/famillethomas/Downloads/Projet/ward/stylus/target/debug/deps/serde-7d8c126063351ea1.d: /Users/famillethomas/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/famillethomas/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/famillethomas/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/famillethomas/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/famillethomas/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/famillethomas/Downloads/Projet/ward/stylus/target/debug/build/serde-19d85101af94958d/out/private.rs
+
+/Users/famillethomas/Downloads/Projet/ward/stylus/target/debug/deps/libserde-7d8c126063351ea1.rlib: /Users/famillethomas/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/famillethomas/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/famillethomas/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/famillethomas/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/famillethomas/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/famillethomas/Downloads/Projet/ward/stylus/target/debug/build/serde-19d85101af94958d/out/private.rs
+
+/Users/famillethomas/Downloads/Projet/ward/stylus/target/debug/deps/libserde-7d8c126063351ea1.rmeta: /Users/famillethomas/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/famillethomas/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/famillethomas/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/famillethomas/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/famillethomas/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/famillethomas/Downloads/Projet/ward/stylus/target/debug/build/serde-19d85101af94958d/out/private.rs
+
+/Users/famillethomas/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs:
+/Users/famillethomas/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs:
+/Users/famillethomas/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs:
+/Users/famillethomas/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs:
+/Users/famillethomas/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs:
+/Users/famillethomas/Downloads/Projet/ward/stylus/target/debug/build/serde-19d85101af94958d/out/private.rs:
+
+# env-dep:OUT_DIR=/Users/famillethomas/Downloads/Projet/ward/stylus/target/debug/build/serde-19d85101af94958d/out
