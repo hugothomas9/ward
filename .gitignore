@@ -1,0 +1,13 @@
+# Foundry
+out/
+cache/
+broadcast/
+# Node (bot)
+bot/node_modules/
+# Stylus / Rust
+stylus/target/
+# Dépendances Foundry vendored — décommenter pour ne PAS versionner lib/
+# lib/
+# Secrets / env
+.env
+*.key
