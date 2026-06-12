@@ -33,6 +33,11 @@ contract DynamicRiskModel is IRiskModel {
     /// `rate` bps per second of REAL time, spread across refreshes.
     uint256 public constant MAX_TIGHTEN_STEP = 60; // seconds
 
+    /// C2/F2: if the price history hasn't been updated within this window, its volatility is
+    /// computed on dead data. Rather than tighten on a frozen feed (which could keep liquidating
+    /// at a stale-derived threshold), refresh() relaxes toward base — the safe direction.
+    uint256 public constant MAX_HISTORY_AGE = 1 hours;
+
     uint256 public currentBps; // the in-effect, smoothed threshold
     uint256 public lastRefresh;
 
@@ -58,10 +63,18 @@ contract DynamicRiskModel is IRiskModel {
     /// @notice Recompute the in-effect threshold from current volatility, applying the F3 rate
     /// limit on tightening. Permissionless: it can only move toward the engine's honest target.
     function refresh() external {
-        uint256[] memory w = history.window();
-        uint256 vol = engine.realizedVol(w);
-        uint256 target = engine.dynamicThresholdBps(baseBps, vol);
-        if (target > baseBps) target = baseBps; // never looser than base
+        uint256 vol;
+        uint256 target;
+        uint256 lu = history.lastUpdate();
+        if (lu == 0 || block.timestamp - lu > MAX_HISTORY_AGE) {
+            // C2/F2: stale or absent data -> do not act on it; relax toward base (safe direction)
+            target = baseBps;
+        } else {
+            uint256[] memory w = history.window();
+            vol = engine.realizedVol(w);
+            target = engine.dynamicThresholdBps(baseBps, vol);
+            if (target > baseBps) target = baseBps; // never looser than base
+        }
 
         uint256 cur = currentBps;
         if (target >= cur) {

@@ -31,6 +31,13 @@ contract MockV3AggregatorTest is Test {
         assertEq(updatedAt, block.timestamp);
     }
 
+    function test_updateAnswerOnlyOwner() public {
+        // C2/F2: a random address must NOT be able to paint the feed (and thus fabricate vol)
+        vm.prank(address(0xBAD));
+        vm.expectRevert();
+        agg.updateAnswer(999e8);
+    }
+
     function test_conformsToAggregatorV3Interface() public {
         AggregatorV3Interface i = AggregatorV3Interface(address(agg));
         (, int256 answer,,,) = i.latestRoundData();

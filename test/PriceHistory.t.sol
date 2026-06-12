@@ -32,14 +32,19 @@ contract PriceHistoryTest is Test {
     }
 
     /// THE attack: there is no setter to inject a chosen price. The only entry point is poke(),
-    /// which reads the feed. An attacker poking can only ever store the real feed value.
+    /// which reads the feed. And the feed itself is owner-gated, so an attacker can neither move
+    /// the feed nor inject via poke — they can only ever store the real feed value.
     function test_attackerCannotInjectArbitraryPrice() public {
         address attacker = address(0xBAD);
-        feed.updateAnswer(250e8);
+        // attacker cannot even move the feed (owner-gated)
+        vm.prank(attacker);
+        vm.expectRevert();
+        feed.updateAnswer(999e8);
+        // and poking only ever stores the real feed value
+        feed.updateAnswer(250e8); // owner (this test) sets the legitimate price
         vm.warp(block.timestamp + MIN_INTERVAL);
         vm.prank(attacker);
         hist.poke();
-        // attacker wanted to push 999; the buffer holds 250 (the feed), not their choice
         assertEq(hist.latestWad(), 250e18);
     }
 

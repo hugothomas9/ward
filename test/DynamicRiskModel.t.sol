@@ -39,6 +39,15 @@ contract DynamicRiskModelTest is Test {
         history = new PriceHistory(address(feed), 1 hours, 60);
         engine = new MockRiskEngine();
         model = new DynamicRiskModel(address(history), address(engine), asset, BASE, RATE);
+        _seedFresh(); // give the history a recent sample so refresh() trusts the data
+    }
+
+    /// One poke so `history.lastUpdate()` is recent; the mock engine ignores the window content,
+    /// only the freshness matters for these tests.
+    function _seedFresh() internal {
+        vm.warp(block.timestamp + 60);
+        history.poke();
+        model.refresh(); // reset lastRefresh to the seed time (target=base here, currentBps stays base)
     }
 
     function test_startsAtBaseThreshold() public {
@@ -81,33 +90,38 @@ contract DynamicRiskModelTest is Test {
         assertLt(hfInstant, 1e18);
     }
 
-    /// C1/F3: a SINGLE refresh after a long gap must NOT be able to collapse the threshold.
-    /// This is the attack the review found: bot down 2h, then one refresh with an extreme target
-    /// previously dropped 8000 -> 4000 in one block and liquidated healthy positions. The drop per
-    /// refresh is now capped to rate * min(elapsed, MAX_TIGHTEN_STEP), independent of the gap.
-    function test_longGapDoesNotCollapseThreshold() public {
-        engine.setTarget(4000); // extreme-vol target (the floor)
-        vm.warp(block.timestamp + 7200); // 2h with no refresh
+    /// C1/F3: with FRESH data but a gap larger than MAX_TIGHTEN_STEP, a single refresh still only
+    /// drops by rate * MAX_TIGHTEN_STEP, never collapsing. (Tests the per-refresh cap in isolation.)
+    function test_capLimitsDropEvenWithinMaxAge() public {
+        engine.setTarget(4000); // extreme target
+        // poke again so data stays fresh, but let 600s pass before refresh
+        vm.warp(block.timestamp + 600);
+        history.poke();
         model.refresh();
         uint256 thr = model.liquidationThresholdBps(asset);
-        // one refresh can drop at most rate(1) * MAX_TIGHTEN_STEP(60) = 60 bps, NOT down to 4000
-        assertEq(thr, 8000 - 60);
+        assertEq(thr, 8000 - 60); // capped to rate(1)*MAX_TIGHTEN_STEP(60), not down to 4000
         assertGt(thr, 4000);
     }
 
-    /// C1/F3: the chiffré scenario, now via a long gap — a position the price alone left healthy
-    /// (ratio 1.30 -> HF 1.04 at base) must stay above 1.0 after one post-gap refresh.
-    function test_singleRefreshAfterGapCannotLiquidateHealthyPosition() public {
-        uint256 colValue = 13000e18; // ratio 1.30 vs debt
-        uint256 debt = 10000e18;
-
-        engine.setTarget(4000);
-        vm.warp(block.timestamp + 7200);
+    /// C2/F2: a STALE history (feed frozen, > maxHistoryAge) must NOT drive tightening on dead
+    /// data — the model relaxes toward base instead. This is even safer (higher HF) and also
+    /// prevents the collapse the review found.
+    function test_staleHistoryRelaxesToBaseInsteadOfTightening() public {
+        engine.setTarget(4000); // pretend extreme vol
+        vm.warp(block.timestamp + 2 hours); // history now stale (> 1h maxHistoryAge)
         model.refresh();
-        uint256 thr = model.liquidationThresholdBps(asset); // 7940
+        assertEq(model.liquidationThresholdBps(asset), BASE); // relaxed, did not act on dead data
+    }
 
-        uint256 hf = model.healthFactor(colValue, debt, thr);
-        assertGe(hf, 1e18, "one post-gap refresh must not push a healthy position into liquidation");
+    /// And a position the price alone left healthy stays healthy after the stale-data refresh.
+    function test_staleRefreshCannotLiquidateHealthyPosition() public {
+        uint256 colValue = 13000e18; // ratio 1.30
+        uint256 debt = 10000e18;
+        engine.setTarget(4000);
+        vm.warp(block.timestamp + 2 hours);
+        model.refresh();
+        uint256 thr = model.liquidationThresholdBps(asset); // BASE (relaxed)
+        assertGe(model.healthFactor(colValue, debt, thr), 1e18);
     }
 
     function test_tighteningReachesTargetOverManyRefreshes() public {
@@ -115,6 +129,7 @@ contract DynamicRiskModelTest is Test {
         // capped to 60 bps/refresh -> needs >= 20 refreshes spaced by >= MAX_TIGHTEN_STEP
         for (uint256 i = 0; i < 25; i++) {
             vm.warp(block.timestamp + 60);
+            history.poke();
             model.refresh();
         }
         assertEq(model.liquidationThresholdBps(asset), 6800); // converges over time, never in one step

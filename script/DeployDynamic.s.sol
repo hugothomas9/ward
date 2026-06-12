@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import {Script, console2} from "forge-std/Script.sol";
 import {LendingCore} from "../src/LendingCore.sol";
 import {WardVault} from "../src/WardVault.sol";
-import {SettablePriceOracle} from "../src/oracles/SettablePriceOracle.sol";
+import {ChainlinkPriceOracle} from "../src/oracles/ChainlinkPriceOracle.sol";
 import {StaticRiskModel} from "../src/models/StaticRiskModel.sol";
 import {LinearInterestModel} from "../src/models/LinearInterestModel.sol";
 import {DynamicRiskModel} from "../src/models/DynamicRiskModel.sol";
@@ -29,21 +29,19 @@ contract DeployDynamic is Script {
         address engine = vm.envAddress("RISK_ENGINE"); // deployed Stylus RiskEngine
         address usdg = vm.envOr("USDG_ADDR", USDG);
         address collateral = vm.envOr("COLLATERAL", TSLA);
-        uint256 initialPriceWad = vm.envOr("INITIAL_PRICE", uint256(250e18));
-        require(initialPriceWad >= 1e16, "INITIAL_PRICE looks unscaled (expect WAD)");
 
         vm.startBroadcast(pk);
 
-        // price feed for the vol history: real Chainlink aggregator in prod, mock on testnet
+        // ONE price feed for BOTH valuation and volatility: real Chainlink aggregator in prod,
+        // owner-controlled mock on testnet. Same feed -> collateral value and vol never diverge.
         address feed = vm.envOr("FEED", address(0));
         if (feed == address(0)) {
-            // 8-dec Chainlink-style feed, seeded at 250 USD
-            feed = address(new MockV3Aggregator(8, 250e8));
+            feed = address(new MockV3Aggregator(8, 250e8)); // 250 USD, 8-dec
             console2.log("Deployed MockV3Aggregator feed:", feed);
         }
 
-        SettablePriceOracle oracle = new SettablePriceOracle(vm.addr(pk));
-        oracle.setPrice(collateral, initialPriceWad);
+        // valuation oracle reads the SAME feed (C2/F2: no disjoint price sources)
+        ChainlinkPriceOracle oracle = new ChainlinkPriceOracle(feed, collateral, 1 hours);
 
         LinearInterestModel interest = new LinearInterestModel(0.05e18);
 
