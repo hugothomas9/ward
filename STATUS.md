@@ -1,13 +1,26 @@
 # Ward — Rapport d'avancement
 
 > Référentiel de suivi du projet. Mis à jour à la fin de chaque bloc de travail.
-> Dernière mise à jour : **2026-06-12** (après Bloc 1 + re-review).
+> Dernière mise à jour : **2026-06-12** (après Bloc 1 + Bloc 2).
 > Source de vérité granulaire : le `git log`. Ce fichier en est la synthèse lisible.
 
-**État global :** MVP on-chain solide et testé (**59 tests verts**) ; le moteur de risque dynamique (le différenciateur) est **validé mais pas encore câblé** → c'est le Bloc 2.
+**État global :** MVP on-chain solide et testé, **+ le moteur de risque dynamique CÂBLÉ end-to-end** (Bloc 2 fait) — le différenciateur est désormais actif ET sécurisé (source de prix non-manipulable F2 + anti-procyclicité F3).
 
-- Tests : **46 Foundry** + **7 vitest (bot)** + **6 cargo (Stylus)** = **59 verts, 0 échec**
-- Déploiement réel : **pas encore broadcast** (nécessite un wallet fundé)
+- Tests : **63 Foundry** + **9 vitest (bot)** + **5 cargo (Stylus)** = **77 verts, 0 échec**
+- Déploiement réel : **pas encore broadcast** (nécessite un wallet fundé ; script `DeployDynamic.s.sol` prêt)
+
+### Bloc 2 — moteur de risque dynamique (fait)
+
+| Pièce | Fait | Finding |
+|---|---|---|
+| `AggregatorV3Interface` + `MockV3Aggregator` (feed real-shaped) | ✅ | — |
+| `PriceHistory` : ring buffer on-chain, `poke()` lit le feed → **provenance imposée** | ✅ | F2 |
+| RiskEngine Stylus rendu **pur/stateless** (plus d'`init`) | ✅ | F7 dissous |
+| `DynamicRiskModel` : vol → seuil avec **durcissement borné par bloc** | ✅ | F3 |
+| `LendingCore.setRiskModel` owner-gated | ✅ | F11 |
+| Câblage + **money shot v2 sous moteur dynamique actif** + bot `poke`/`refresh` | ✅ | F1 |
+
+**Tests d'attaque inclus** : impossible d'injecter une vol arbitraire (F2) ; le scénario chiffré procyclique (HF 1.25→0.98) **ne liquide plus** (F3).
 
 ---
 
