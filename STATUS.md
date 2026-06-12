@@ -7,7 +7,7 @@
 **État global :** MVP on-chain solide et testé, **+ le moteur de risque dynamique CÂBLÉ end-to-end** (Bloc 2 fait) — le différenciateur est désormais actif ET sécurisé (source de prix non-manipulable F2 + anti-procyclicité F3).
 
 - Tests : **63 Foundry** + **9 vitest (bot)** + **5 cargo (Stylus)** = **77 verts, 0 échec**
-- Déploiement réel : **pas encore broadcast** (nécessite un wallet fundé ; script `DeployDynamic.s.sol` prêt)
+- Déploiement réel : ✅ **DÉPLOYÉ sur RH Chain testnet** (moteur dynamique actif, vérifié on-chain) — adresses dans [DEPLOYMENTS.md](./DEPLOYMENTS.md)
 
 ### Bloc 2 — moteur de risque dynamique (fait)
 
