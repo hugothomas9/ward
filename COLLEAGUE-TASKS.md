@@ -4,14 +4,15 @@
 > risque dynamique (Bloc 2) est câblé de l'autre côté. Prends-les dans l'ordre ; si tu n'as le
 > temps que pour une ou deux, pas grave — le reste reste en roadmap pour le pitch.
 
-## ⚠️ Règle d'or pour ne pas se marcher dessus
+## Point de départ
 
-Le Bloc 2 (moi) touche ces fichiers — **ne les modifie pas** :
-`stylus/src/lib.rs`, `src/models/StylusRiskModelAdapter.sol`, un nouveau `src/PriceHistory.sol`,
-`src/LendingCore.sol`, `script/Deploy.s.sol`, `bot/`.
+Le **Bloc 2 (moteur de risque dynamique) est mergé sur `main` avant que tu commences** — donc
+tu pars d'un core complet et tu peux **t'appuyer dessus** si utile (p.ex. taux fixe pricé par la
+yield-curve Stylus, intégration des seuils dynamiques). Pas de contrainte d'isolation stricte.
 
-→ **Travaille dans des fichiers NEUFS** (nouveaux contrats + nouveaux tests). Tes features sont
-conçues pour ça : elles **réutilisent** les interfaces existantes mais ne modifient pas le core.
+Bon réflexe quand même : **pars sur des fichiers neufs** (nouveaux contrats + tests) et une branche
+`feature/...`, pour des merges propres. Tu modifies le core seulement si ta feature l'exige
+vraiment — et dans ce cas, `git pull` d'abord + préviens-moi.
 
 ## Conventions du projet (à respecter)
 
