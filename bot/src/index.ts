@@ -1,6 +1,6 @@
 import { config } from "./config.js";
 import { readHealthFactor, publicClient } from "./monitor.js";
-import { runOnce, makeProtect, WardDeps, Policy } from "./ward.js";
+import { runOnce, runMaintenance, makeProtect, makePoke, makeRefresh, WardDeps, Policy } from "./ward.js";
 import { wardVaultAbi } from "./abi.js";
 
 const TRACKED: `0x${string}`[] = (process.env.TRACKED_USERS ?? "")
@@ -20,6 +20,8 @@ const deps: WardDeps = {
   protect: makeProtect(),
 };
 
+const maintenance = { poke: makePoke(), refresh: makeRefresh() };
+
 // F12: warn at startup if any tracked user has no policy, so the operator sees it
 // immediately rather than discovering an unprotected position after a liquidation.
 async function startupCheck(): Promise<void> {
@@ -35,4 +37,9 @@ async function startupCheck(): Promise<void> {
 
 console.log(`Ward watching ${TRACKED.length} users every ${config.pollMs}ms`);
 void startupCheck();
-setInterval(() => { runOnce(deps).catch((e) => console.error("ward error", e)); }, config.pollMs);
+setInterval(() => {
+  // 1) keep the on-chain risk signal fresh, then 2) protect anyone who breached their trigger
+  runMaintenance(maintenance)
+    .then(() => runOnce(deps))
+    .catch((e) => console.error("ward error", e));
+}, config.pollMs);
