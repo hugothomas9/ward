@@ -25,6 +25,14 @@ contract DynamicRiskModel is IRiskModel {
     uint256 public immutable baseBps;
     uint256 public immutable maxTightenBpsPerSec;
 
+    /// C1/F3: caps how much wall-clock a SINGLE refresh may convert into tightening budget.
+    /// Without it, the drop per refresh = rate * (now - lastRefresh), so one refresh after a long
+    /// gap (bot down, RPC outage, patient attacker) could collapse the threshold in one block and
+    /// liquidate positions the price alone left healthy. With the cap, a single refresh drops at
+    /// most rate * MAX_TIGHTEN_STEP bps regardless of the gap; the threshold can only tighten at
+    /// `rate` bps per second of REAL time, spread across refreshes.
+    uint256 public constant MAX_TIGHTEN_STEP = 60; // seconds
+
     uint256 public currentBps; // the in-effect, smoothed threshold
     uint256 public lastRefresh;
 
@@ -60,8 +68,11 @@ contract DynamicRiskModel is IRiskModel {
             // loosening (or unchanged): immediate, it only raises HF
             cur = target;
         } else {
-            // tightening: clamp the drop to the per-second budget
-            uint256 maxDrop = maxTightenBpsPerSec * (block.timestamp - lastRefresh);
+            // tightening: clamp the drop to rate * min(elapsed, MAX_TIGHTEN_STEP) so a single
+            // refresh after a long gap cannot collapse the threshold (C1/F3).
+            uint256 elapsed = block.timestamp - lastRefresh;
+            if (elapsed > MAX_TIGHTEN_STEP) elapsed = MAX_TIGHTEN_STEP;
+            uint256 maxDrop = maxTightenBpsPerSec * elapsed;
             uint256 floorBps = cur > maxDrop ? cur - maxDrop : 0;
             cur = target > floorBps ? target : floorBps;
         }

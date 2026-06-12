@@ -81,24 +81,58 @@ contract DynamicRiskModelTest is Test {
         assertLt(hfInstant, 1e18);
     }
 
-    function test_tighteningEventuallyReachesTarget() public {
-        engine.setTarget(6800);
-        vm.warp(block.timestamp + 2000); // plenty of time
+    /// C1/F3: a SINGLE refresh after a long gap must NOT be able to collapse the threshold.
+    /// This is the attack the review found: bot down 2h, then one refresh with an extreme target
+    /// previously dropped 8000 -> 4000 in one block and liquidated healthy positions. The drop per
+    /// refresh is now capped to rate * min(elapsed, MAX_TIGHTEN_STEP), independent of the gap.
+    function test_longGapDoesNotCollapseThreshold() public {
+        engine.setTarget(4000); // extreme-vol target (the floor)
+        vm.warp(block.timestamp + 7200); // 2h with no refresh
         model.refresh();
-        assertEq(model.liquidationThresholdBps(asset), 6800); // delay, not a permanent cap
+        uint256 thr = model.liquidationThresholdBps(asset);
+        // one refresh can drop at most rate(1) * MAX_TIGHTEN_STEP(60) = 60 bps, NOT down to 4000
+        assertEq(thr, 8000 - 60);
+        assertGt(thr, 4000);
+    }
+
+    /// C1/F3: the chiffré scenario, now via a long gap — a position the price alone left healthy
+    /// (ratio 1.30 -> HF 1.04 at base) must stay above 1.0 after one post-gap refresh.
+    function test_singleRefreshAfterGapCannotLiquidateHealthyPosition() public {
+        uint256 colValue = 13000e18; // ratio 1.30 vs debt
+        uint256 debt = 10000e18;
+
+        engine.setTarget(4000);
+        vm.warp(block.timestamp + 7200);
+        model.refresh();
+        uint256 thr = model.liquidationThresholdBps(asset); // 7940
+
+        uint256 hf = model.healthFactor(colValue, debt, thr);
+        assertGe(hf, 1e18, "one post-gap refresh must not push a healthy position into liquidation");
+    }
+
+    function test_tighteningReachesTargetOverManyRefreshes() public {
+        engine.setTarget(6800); // 1200 bps below base
+        // capped to 60 bps/refresh -> needs >= 20 refreshes spaced by >= MAX_TIGHTEN_STEP
+        for (uint256 i = 0; i < 25; i++) {
+            vm.warp(block.timestamp + 60);
+            model.refresh();
+        }
+        assertEq(model.liquidationThresholdBps(asset), 6800); // converges over time, never in one step
     }
 
     // --- loosening is immediate (safe: it only raises HF, never liquidates) ---
 
     function test_looseningSnapsBackUp() public {
         engine.setTarget(6800);
-        vm.warp(block.timestamp + 2000);
-        model.refresh();
-        assertEq(model.liquidationThresholdBps(asset), 6800);
+        for (uint256 i = 0; i < 25; i++) {
+            vm.warp(block.timestamp + 60);
+            model.refresh();
+        }
+        assertEq(model.liquidationThresholdBps(asset), 6800); // converged via many capped steps
 
         engine.setTarget(8000); // vol dropped back
         model.refresh(); // same block, no elapsed
-        assertEq(model.liquidationThresholdBps(asset), 8000); // immediate, not rate-limited
+        assertEq(model.liquidationThresholdBps(asset), 8000); // loosening is immediate, not rate-limited
     }
 
     function test_neverExceedsBase() public {
