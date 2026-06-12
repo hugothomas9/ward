@@ -5,7 +5,6 @@
 //! removing state entirely). All inputs are passed in by the trusted caller:
 //!   - `realized_vol(prices)`             : stddev of simple returns over a price window (WAD)
 //!   - `dynamic_threshold_bps(base, vol)` : volatility-adjusted liquidation threshold (bps)
-//!   - `risk_params(base, prices)`        : both, in one call
 //!
 //! Provenance of `prices` is enforced upstream: the only caller is the Solidity DynamicRiskModel,
 //! which feeds the on-chain `PriceHistory` buffer (filled by `poke()` reading the Chainlink feed).
@@ -89,12 +88,6 @@ impl RiskEngine {
         U256::from(eff)
     }
 
-    /// Convenience: returns (vol, effectiveThresholdBps) for a base threshold and a price window.
-    pub fn risk_params(&self, base_bps: U256, prices: Vec<U256>) -> (U256, U256) {
-        let vol = self.realized_vol(prices);
-        let thr = self.dynamic_threshold_bps(base_bps, vol);
-        (vol, thr)
-    }
 }
 
 #[cfg(test)]
@@ -141,16 +134,4 @@ mod test {
         assert_eq!(e.dynamic_threshold_bps(U256::from(8000), U256::from(2 * WAD)), U256::from(4000));
     }
 
-    #[test]
-    fn risk_params_combines_both() {
-        let e = engine();
-        let p = alloc::vec![
-            U256::from(100u128 * WAD),
-            U256::from(110u128 * WAD),
-            U256::from(99u128 * WAD),
-        ];
-        let (vol, thr) = e.risk_params(U256::from(8000), p);
-        assert_eq!(vol, U256::from(WAD / 10));
-        assert_eq!(thr, U256::from(7600));
-    }
 }

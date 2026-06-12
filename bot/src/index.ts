@@ -1,5 +1,7 @@
-import { config } from "./config.js";
+import { config, assertConfig } from "./config.js";
 import { readHealthFactor, publicClient } from "./monitor.js";
+
+assertConfig(); // fail fast on missing/bad env vars before wiring keys
 import { runOnce, runMaintenance, makeProtect, makePoke, makeRefresh, WardDeps, Policy } from "./ward.js";
 import { wardVaultAbi } from "./abi.js";
 
