@@ -90,6 +90,14 @@ contract WardVaultTest is Test {
         vault.setPolicy(1.5e18, 1.2e18, keeper);
     }
 
+    /// R2: a zero trigger never fires protect() -> a "zombie policy" where the user believes
+    /// they're protected but never are. Reject it.
+    function test_policyTriggerMustBePositive() public {
+        vm.prank(alice);
+        vm.expectRevert(bytes("trigger=0"));
+        vault.setPolicy(0, 0, keeper);
+    }
+
     function _fundAndPolicy(uint256 amount) internal {
         vm.startPrank(alice);
         usdg.approve(address(vault), type(uint256).max);
