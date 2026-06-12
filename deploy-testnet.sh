@@ -23,8 +23,9 @@ if [ "$BAL" = "0" ]; then
 fi
 
 echo "== Step 1/2: deploy the Stylus RiskEngine =="
-ENGINE=$(cd stylus && cargo stylus deploy --endpoint="$RPC" --private-key="$DEPLOYER_KEY" --no-verify 2>&1 \
-  | tee /dev/stderr | grep -oiE "deployed code at address:? *0x[0-9a-fA-F]{40}" | grep -oE "0x[0-9a-fA-F]{40}" | tail -1)
+# cargo stylus colorizes output, so strip ANSI escapes before parsing the address.
+STYLUS_LOG=$(cd stylus && cargo stylus deploy --endpoint="$RPC" --private-key="$DEPLOYER_KEY" --no-verify 2>&1 | tee /dev/stderr)
+ENGINE=$(printf '%s' "$STYLUS_LOG" | sed -E 's/\x1b\[[0-9;]*m//g' | grep -oiE "deployed code at address:? *0x[0-9a-fA-F]{40}" | grep -oiE "0x[0-9a-fA-F]{40}" | tail -1)
 if [ -z "${ENGINE:-}" ]; then echo "ERROR: could not parse RiskEngine address from cargo stylus output"; exit 1; fi
 echo "RiskEngine deployed at: $ENGINE"
 
