@@ -1,7 +1,7 @@
 import { createWalletClient, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { config } from "./config.js";
-import { wardVaultAbi } from "./abi.js";
+import { wardVaultAbi, priceHistoryAbi, dynamicRiskAbi } from "./abi.js";
 import { shouldProtect } from "./monitor.js";
 
 export interface Policy {
@@ -39,6 +39,28 @@ export async function runOnce(deps: WardDeps): Promise<void> {
   }
 }
 
+export interface MaintenanceDeps {
+  poke: () => Promise<void>;
+  refresh: () => Promise<void>;
+}
+
+/// Keeps the on-chain risk signal fresh: append the latest feed price, then recompute the
+/// vol-aware threshold. poke() reverting "too soon" (the sampling rate limit) is expected and
+/// must not block the refresh. Neither action is custodial — they only move state toward honest
+/// values, so this stays within the keeper's bounded, de-risking-only role.
+export async function runMaintenance(deps: MaintenanceDeps): Promise<void> {
+  try {
+    await deps.poke();
+  } catch {
+    // "too soon" / "stale feed" are normal — skip silently
+  }
+  try {
+    await deps.refresh();
+  } catch (e) {
+    console.error("ward: refresh failed", e);
+  }
+}
+
 export function makeProtect() {
   const account = privateKeyToAccount(config.keeperKey);
   const wallet = createWalletClient({ account, transport: http(config.rpcUrl) });
@@ -48,6 +70,34 @@ export function makeProtect() {
       abi: wardVaultAbi,
       functionName: "protect",
       args: [user],
+      chain: null,
+    });
+  };
+}
+
+export function makePoke() {
+  const account = privateKeyToAccount(config.keeperKey);
+  const wallet = createWalletClient({ account, transport: http(config.rpcUrl) });
+  return async () => {
+    await wallet.writeContract({
+      address: config.priceHistory,
+      abi: priceHistoryAbi,
+      functionName: "poke",
+      args: [],
+      chain: null,
+    });
+  };
+}
+
+export function makeRefresh() {
+  const account = privateKeyToAccount(config.keeperKey);
+  const wallet = createWalletClient({ account, transport: http(config.rpcUrl) });
+  return async () => {
+    await wallet.writeContract({
+      address: config.riskModel,
+      abi: dynamicRiskAbi,
+      functionName: "refresh",
+      args: [],
       chain: null,
     });
   };
