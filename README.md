@@ -54,10 +54,10 @@ bot/                 keeper TS (viem) : maintenance (poke+refresh) puis protect(
 script/
   DeployDynamic.s.sol  ★ LE déploiement (moteur dynamique actif)
   Deploy.s.sol         variante statique (StaticRiskModel) — pour comparaison/debug
-test/                72 tests Foundry, dont MoneyShot v1 (statique) et MoneyShotV2 (moteur dynamique actif)
+test/                73 tests Foundry, dont MoneyShot v1 (statique) et MoneyShotV2 (moteur dynamique actif)
 ```
 
-**86 tests verts au total** : **72 Foundry** (contrats) + **9 vitest** (bot) + **5 cargo** (Stylus).
+**89 tests verts au total** : **73 Foundry** (contrats) + **12 vitest** (bot) + **4 cargo** (Stylus).
 
 ## Le money shot
 
@@ -69,13 +69,13 @@ test/                72 tests Foundry, dont MoneyShot v1 (statique) et MoneyShot
 ## Lancer
 
 ```bash
-# tests contrats (72)
+# tests contrats (73)
 forge test
 
-# tests bot (9)
+# tests bot (12)
 cd bot && npm install && npm test
 
-# tests RiskEngine Stylus (5) — la feature stylus-test est OBLIGATOIRE
+# tests RiskEngine Stylus (4) — la feature stylus-test est OBLIGATOIRE
 #   (sans elle, stylus_sdk::testing n'est pas compilé et `cargo test` nu échoue)
 cd stylus && cargo test --features stylus-test
 

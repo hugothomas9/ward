@@ -22,6 +22,19 @@
 
 **Tests d'attaque inclus** : impossible d'injecter une vol arbitraire (F2) ; le scénario chiffré procyclique (HF 1.25→0.98) **ne liquide plus** (F3).
 
+### Bloc 2bis — corrections post re-revue (Bloc 3) — fait
+
+La re-revue a montré que F2/F3 étaient en trompe-l'œil. Corrigé en TDD (branche `hugo1`) :
+
+| Correctif | Ce qui était cassé | Fix |
+|---|---|---|
+| **C1 (F3)** | rate-limit basé sur `now - lastRefresh` → un refresh espacé effondrait le seuil (8000→4000) et liquidait | drop borné à `rate × min(elapsed, 60s)` → durcissement borné en temps réel ; tests rejouent le trou 2h |
+| **C2 (F2)** | feed mock public (n'importe qui peint la vol) ; refresh sur données périmées ; deux prix disjoints | mock `onlyOwner` ; `refresh` relâche si fenêtre périmée ; `ChainlinkPriceOracle` → un seul feed pour valo + vol |
+| **C3** | README périmé, `IPriceOracle` commentaire faux (R1), 2 scripts ambigus | README à jour (89 tests, `DeployDynamic` = LE deploy), commentaire corrigé, scripts étiquetés |
+| **C4** | `renounceOwnership` figerait `setRiskModel` ; code mort ; env bot non validées | renounce bloqué ; `LIQUIDATION_BONUS_BPS`/`risk_params` supprimés ; `assertConfig()` fail-fast |
+
+Tests : **73 Foundry + 12 vitest + 4 cargo = 89 verts**.
+
 ---
 
 ## 1. Ce qui a été fait initialement (Phases 0 → 5)
