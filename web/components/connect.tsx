@@ -34,13 +34,6 @@ const WALLETS: WalletDef[] = [
     desc: "Extension navigateur",
     img: "/wallets/metamask.svg",
   },
-  {
-    kind: "walletconnect",
-    name: "WalletConnect",
-    desc: "Scanner avec ton mobile",
-    mask: "/wallets/walletconnect.svg",
-    color: "#3b99fc",
-  },
 ];
 
 function WalletLogo({ w }: { w: WalletDef }) {
