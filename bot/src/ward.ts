@@ -1,8 +1,16 @@
-import { createWalletClient, http } from "viem";
+import { createPublicClient, createWalletClient, http, defineChain } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { config } from "./config.js";
 import { wardVaultAbi, priceHistoryAbi, dynamicRiskAbi } from "./abi.js";
 import { shouldProtect } from "./monitor.js";
+
+// Anti-replay: bind the chainId so viem includes it in every signed tx.
+const rhChain = defineChain({
+  id: config.chainId,
+  name: "Robinhood Chain Testnet",
+  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  rpcUrls: { default: { http: [config.rpcUrl] } },
+});
 
 export interface Policy {
   triggerHF: bigint;
@@ -61,44 +69,55 @@ export async function runMaintenance(deps: MaintenanceDeps): Promise<void> {
   }
 }
 
-export function makeProtect() {
+function makeClients() {
   const account = privateKeyToAccount(config.keeperKey);
-  const wallet = createWalletClient({ account, transport: http(config.rpcUrl) });
+  const transport = http(config.rpcUrl);
+  const publicClient = createPublicClient({ chain: rhChain, transport });
+  const wallet = createWalletClient({ account, chain: rhChain, transport });
+  return { account, publicClient, wallet };
+}
+
+export function makeProtect() {
+  const { publicClient, wallet, account } = makeClients();
   return async (user: `0x${string}`) => {
-    await wallet.writeContract({
-      address: config.wardVault,
-      abi: wardVaultAbi,
-      functionName: "protect",
-      args: [user],
-      chain: null,
-    });
+    const call = { address: config.wardVault, abi: wardVaultAbi, functionName: "protect", args: [user] } as const;
+    await publicClient.simulateContract({ ...call, account: account.address });
+    const hash = await wallet.writeContract(call);
+    const receipt = await publicClient.waitForTransactionReceipt({ hash });
+    if (receipt.status !== "success") console.error(`ward: protect(${user}) reverted, hash=${hash}`);
   };
 }
 
 export function makePoke() {
-  const account = privateKeyToAccount(config.keeperKey);
-  const wallet = createWalletClient({ account, transport: http(config.rpcUrl) });
+  const { publicClient, wallet, account } = makeClients();
   return async () => {
-    await wallet.writeContract({
-      address: config.priceHistory,
-      abi: priceHistoryAbi,
-      functionName: "poke",
-      args: [],
-      chain: null,
-    });
+    const call = { address: config.priceHistory, abi: priceHistoryAbi, functionName: "poke", args: [] } as const;
+    await publicClient.simulateContract({ ...call, account: account.address });
+    const hash = await wallet.writeContract(call);
+    await publicClient.waitForTransactionReceipt({ hash });
+  };
+}
+
+/// Guard: skips a new tick if the previous one is still running, preventing concurrent protect() calls.
+export function makeTickRunner(tick: () => Promise<void>): () => Promise<void> {
+  let running = false;
+  return async () => {
+    if (running) return;
+    running = true;
+    try {
+      await tick();
+    } finally {
+      running = false;
+    }
   };
 }
 
 export function makeRefresh() {
-  const account = privateKeyToAccount(config.keeperKey);
-  const wallet = createWalletClient({ account, transport: http(config.rpcUrl) });
+  const { publicClient, wallet, account } = makeClients();
   return async () => {
-    await wallet.writeContract({
-      address: config.riskModel,
-      abi: dynamicRiskAbi,
-      functionName: "refresh",
-      args: [],
-      chain: null,
-    });
+    const call = { address: config.riskModel, abi: dynamicRiskAbi, functionName: "refresh", args: [] } as const;
+    await publicClient.simulateContract({ ...call, account: account.address });
+    const hash = await wallet.writeContract(call);
+    await publicClient.waitForTransactionReceipt({ hash });
   };
 }

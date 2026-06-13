@@ -1,7 +1,11 @@
-import { config } from "./config.js";
+import { config, validateConfig } from "./config.js";
 import { readHealthFactor, publicClient } from "./monitor.js";
-import { runOnce, runMaintenance, makeProtect, makePoke, makeRefresh, WardDeps, Policy } from "./ward.js";
+import { runOnce, runMaintenance, makeProtect, makePoke, makeRefresh, makeTickRunner, WardDeps, Policy } from "./ward.js";
 import { wardVaultAbi } from "./abi.js";
+
+// Fail fast on startup if env vars are missing or malformed — never let an undefined address
+// reach viem and produce a cryptic RPC error far from the root cause.
+validateConfig(config);
 
 const TRACKED: `0x${string}`[] = (process.env.TRACKED_USERS ?? "")
   .split(",").filter(Boolean) as `0x${string}`[];
@@ -37,9 +41,11 @@ async function startupCheck(): Promise<void> {
 
 console.log(`Ward watching ${TRACKED.length} users every ${config.pollMs}ms`);
 void startupCheck();
+
+const tick = makeTickRunner(() =>
+  runMaintenance(maintenance).then(() => runOnce(deps))
+);
+
 setInterval(() => {
-  // 1) keep the on-chain risk signal fresh, then 2) protect anyone who breached their trigger
-  runMaintenance(maintenance)
-    .then(() => runOnce(deps))
-    .catch((e) => console.error("ward error", e));
+  tick().catch((e) => console.error("ward error", e));
 }, config.pollMs);
