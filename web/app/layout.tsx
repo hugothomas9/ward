@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { Fraunces, Hanken_Grotesk, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
+import { WardProvider } from "@/components/ward-provider";
+import { SiteNav } from "@/components/site-nav";
+import { SiteFooter } from "@/components/site-footer";
+import { Toaster } from "@/components/ui/sonner";
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
@@ -35,7 +39,16 @@ export default function RootLayout({
       lang="fr"
       className={`${fraunces.variable} ${hanken.variable} ${plexMono.variable} h-full`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full">
+        <WardProvider>
+          <div className="relative z-10 flex min-h-screen flex-col">
+            <SiteNav />
+            <main className="flex-1">{children}</main>
+            <SiteFooter />
+          </div>
+          <Toaster position="bottom-right" />
+        </WardProvider>
+      </body>
     </html>
   );
 }
