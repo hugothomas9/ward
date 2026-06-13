@@ -11,3 +11,4 @@ stylus/target/
 # Secrets / env
 .env
 *.key
+.superpowers/

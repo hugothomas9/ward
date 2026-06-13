@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Ward — maquette app mobile (roadmap)</title>
+<style>
+  body{margin:0;background:#0f1115;font-family:-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif;
+    display:flex;flex-direction:column;align-items:center;gap:14px;padding:40px 16px;color:#cbd5e1;}
+  h1{font-size:20px;color:#fff;font-weight:700;}
+  .sub{font-size:13px;color:#7b8794;margin-top:-8px;}
+  .phone{width:320px;background:#fff;border-radius:28px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5);
+    display:flex;flex-direction:column;min-height:600px;border:6px solid #1a1a1a;}
+  .notch{height:26px;background:#1a1a1a;}
+  .hero{padding:26px 20px 18px;}
+  .lbl{font-size:11px;color:#8a8f98;text-transform:uppercase;letter-spacing:.5px;}
+  .bal{font-size:34px;font-weight:700;color:#111;}
+  .ward{font-size:12px;color:#00a843;font-weight:600;}
+  .row{padding:14px 20px;border-top:1px solid #eee;display:flex;justify-content:space-between;align-items:center;}
+  .row .name{font-weight:600;color:#111;} .row .meta{font-size:11px;color:#8a8f98;}
+  .hf-ok{font-weight:700;color:#00a843;} .hf-warn{font-weight:700;color:#e8a800;}
+  .tag-on{font-size:10px;color:#8a8f98;} .tag-off{font-size:10px;color:#c0392b;}
+  .tabs{margin-top:auto;display:flex;border-top:1px solid #eee;font-size:10px;text-align:center;color:#8a8f98;}
+  .tabs div{flex:1;padding:11px 0;} .tabs .on{color:#00a843;font-weight:700;}
+</style>
+</head>
+<body>
+  <h1>Ward — version app mobile</h1>
+  <div class="sub">Maquette gardée pour la roadmap / vidéo (« et demain, dans l'app Robinhood »)</div>
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="hero">
+      <div class="lbl">Solde net</div>
+      <div class="bal">$2 480,15</div>
+      <div class="ward">▲ couvert par Ward</div>
+    </div>
+    <div class="lbl" style="padding:4px 20px;">Tes crédits</div>
+    <div class="row">
+      <div><div class="name">TSLA → USDG</div><div class="meta">10 TSLA · dette 1 900</div></div>
+      <div style="text-align:right;"><div class="hf-ok">HF 1.31</div><div class="tag-on">🛡 Ward ON</div></div>
+    </div>
+    <div class="row">
+      <div><div class="name">TSLA → USDG</div><div class="meta">5 TSLA · dette 800</div></div>
+      <div style="text-align:right;"><div class="hf-warn">HF 1.08</div><div class="tag-off">Ward OFF</div></div>
+    </div>
+    <div class="tabs">
+      <div class="on">●<br>Accueil</div>
+      <div>⇄<br>Trading</div>
+      <div>🛡<br>Ward</div>
+      <div>○<br>Profil</div>
+    </div>
+  </div>
+</body>
+</html>
