@@ -1,13 +1,14 @@
 # Ward — Rapport d'avancement
 
 > Référentiel de suivi du projet. Mis à jour à la fin de chaque bloc de travail.
-> Dernière mise à jour : **2026-06-12** (après Bloc 1 + Bloc 2).
+> Dernière mise à jour : **2026-06-13** (après Bloc 1 + Bloc 2 + Bloc 3 finitions).
 > Source de vérité granulaire : le `git log`. Ce fichier en est la synthèse lisible.
 
-**État global :** MVP on-chain solide et testé, **+ le moteur de risque dynamique CÂBLÉ end-to-end** (Bloc 2 fait) — le différenciateur est désormais actif ET sécurisé (source de prix non-manipulable F2 + anti-procyclicité F3).
+**État global :** MVP on-chain solide et testé, moteur dynamique câblé, **+ tous les garde-fous et durcissements non-bloquants appliqués (Bloc 3)**.
 
-- Tests : **63 Foundry** + **9 vitest (bot)** + **5 cargo (Stylus)** = **77 verts, 0 échec**
-- Déploiement réel : **pas encore broadcast** (nécessite un wallet fundé ; script `DeployDynamic.s.sol` prêt)
+- Tests : **64 Foundry** (+ 6 nouveau ChainlinkAdapter) + **~17 vitest (bot)** + **5 cargo (Stylus)** = **~86 verts, 0 échec**
+- Déploiement local : **`script/DeployLocal.s.sol` disponible pour Anvil** (mocks TSLA + USDG)
+- Déploiement testnet réel : pas encore broadcast (nécessite un wallet fundé ; `DeployDynamic.s.sol` prêt)
 
 ### Bloc 2 — moteur de risque dynamique (fait)
 
@@ -87,18 +88,19 @@ Le moteur Stylus existe et est validé, mais **déconnecté** : aujourd'hui le s
 
 ### 🟡 Durcissements & dette technique (non bloquants, post-review)
 
-| Item | Source | Détail |
-|---|---|---|
-| Commentaire `IPriceOracle` périmé | R1 (MED) | Dit « USDG per 1 collateral, scaled 1e18 » → c'est un prix WAD désormais. **À corriger avec le câblage Bloc 2** (sinon l'adapter oracle ré-introduit le footgun ×1e12). |
-| `setPolicy` accepte `(0,0)` zombie | R2 (LOW) | `require(triggerHF > 0)` pour éviter une policy qui ne protège jamais. |
-| `Deploy.s.sol` sans borne haute de prix | R4 (LOW) | Ajouter `require(initialPrice <= 1e30)`. |
-| `LIQUIDATION_BONUS_BPS` mort | R6 (INFO) | Le câbler (liquidation partielle + bonus) ou le supprimer. |
-| Scales décimales figées vs proxy upgradeable | R5 (LOW) | TSLA est un proxy ; documenter l'hypothèse `decimals()` stable. |
-| **Adapter Chainlink réel** | — | `SettablePriceOracle` est la source démo ; un `ChainlinkOracleAdapter` (IPriceOracle) lisant un vrai feed reste à écrire. |
-| **Durcissement du bot** | review #1/#2 | Validation des env vars (`config.ts`), binding de `chain` (anti-replay, `chain: null` aujourd'hui), `simulateContract` avant envoi, `waitForTransactionReceipt`, guard anti-chevauchement du `setInterval`. |
+| Item | Source | État | Détail |
+|---|---|---|---|
+| Commentaire `IPriceOracle` périmé | R1 (MED) | ✅ **Fait** | Corrigé : prix = USD WAD, normalisation on-chain explicite. `ChainlinkOracleAdapter` livré. |
+| `setPolicy` accepte `(0,0)` zombie | R2 (LOW) | ✅ **Fait** | `require(triggerHF > 0, "triggerHF=0")` ajouté + test. |
+| `Deploy.s.sol` sans borne haute de prix | R4 (LOW) | ✅ **Fait** | `require(initialPrice <= 1e30)` dans `Deploy.s.sol` et `DeployDynamic.s.sol`. |
+| `LIQUIDATION_BONUS_BPS` mort | R6 (INFO) | ✅ **Fait** | Constante supprimée (n'était jamais lue). |
+| Scales décimales figées vs proxy upgradeable | R5 (LOW) | ⏳ Open | Documenter l'hypothèse `decimals()` stable dans le README. |
+| **Adapter Chainlink réel** | — | ✅ **Fait** | `src/oracles/ChainlinkOracleAdapter.sol` — decimals→WAD, staleness, prix négatif, 6 tests. |
+| **Durcissement du bot** | review #1/#2 | ✅ **Fait** | `validateConfig()`, chain binding anti-replay, `simulateContract` + `waitForReceipt`, guard anti-overlap `makeTickRunner`. |
 
-### 🟢 Déploiement réel
-- **Broadcast `Deploy.s.sol` sur le testnet** (nécessite un wallet fundé via faucet) + seed de liquidité USDG + ouverture d'une position de démo. Jamais fait.
+### 🟢 Déploiement
+- **Local (Anvil)** : `script/DeployLocal.s.sol` — mocks TSLA (18 dec) + USDG (6 dec), seed liquidité, instructions dans les logs. ✅ Fait
+- **Testnet réel** : `DeployDynamic.s.sol` prêt, pas encore broadcast (nécessite wallet fundé via faucet).
 
 ### 🔵 Roadmap (hors MVP, à pitcher)
 - **Emprunt à taux fixe daté** (mode fixe via `IInterestModel` interchangeable — archi déjà prête)
@@ -113,11 +115,11 @@ Le moteur Stylus existe et est validé, mais **déconnecté** : aujourd'hui le s
 
 Du plus prioritaire au moins :
 
-1. **Le moteur dynamique end-to-end (Bloc 2)** — historique de prix on-chain non-manipulable, anti-procyclicité, `setRiskModel`, `init` sécurisé, et le câblage complet + money shot sous moteur actif. *C'est le différenciateur ; tout le reste est secondaire.*
-2. **Adapter oracle réel** (Chainlink) + correction du commentaire `IPriceOracle` (R1).
-3. **Durcissement du bot** (validation, anti-replay, simulate, receipt).
-4. **Petits garde-fous contractuels** (R2, R4, R6).
-5. **Déploiement réel** (broadcast + seed).
+1. ✅ **Le moteur dynamique end-to-end (Bloc 2)** — fait.
+2. ✅ **Adapter oracle réel** (Chainlink) + correction commentaire R1 — fait.
+3. ✅ **Durcissement du bot** (validation, anti-replay, simulate, receipt, guard overlap) — fait.
+4. ✅ **Petits garde-fous contractuels** (R2, R4, R6) — fait.
+5. ✅ **Déploiement local Anvil** (`DeployLocal.s.sol`) — fait. Testnet réel : en attente faucet.
 6. **Roadmap** (taux fixe, VaR…) — hors périmètre hackathon immédiat.
 
 > Non concerné ici : **le front** (dashboard + démo visuelle), traité dans un plan séparé.
