@@ -69,6 +69,11 @@ contract LendingCore is ReentrancyGuard, Ownable {
         emit RiskModelSet(risk_);
     }
 
+    /// @notice Disabled: renouncing ownership would permanently freeze setRiskModel.
+    function renounceOwnership() public override onlyOwner {
+        revert("renounce disabled");
+    }
+
     // --- lender side (real USDG liquidity) ---
     function provide(uint256 amount) external nonReentrant {
         debtToken.safeTransferFrom(msg.sender, address(this), amount);
@@ -127,9 +132,7 @@ contract LendingCore is ReentrancyGuard, Ownable {
         emit Repaid(user, msg.sender, paid);
     }
 
-    // --- liquidation backstop ---
-    uint256 public constant LIQUIDATION_BONUS_BPS = 1000; // 10%
-
+    // --- liquidation backstop (minimal: full-position seizure; the product's POINT is to avoid it) ---
     event Liquidated(address indexed user, address indexed liquidator, uint256 debtRepaid, uint256 collateralSeized);
 
     /// @notice Simple full-position backstop: liquidator repays debt, seizes all collateral.

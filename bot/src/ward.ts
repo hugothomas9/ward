@@ -2,7 +2,26 @@ import { createWalletClient, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { config } from "./config.js";
 import { wardVaultAbi, priceHistoryAbi, dynamicRiskAbi } from "./abi.js";
-import { shouldProtect } from "./monitor.js";
+import { shouldProtect, publicClient } from "./monitor.js";
+import { robinhoodTestnet } from "./chain.js";
+
+/// Wraps a periodic task so an overflowing cycle (slow RPC, pending tx) cannot overlap with the
+/// next tick — overlapping cycles would double-protect a user and clash nonces.
+export function makeGuardedRunner(task: () => Promise<void>): () => Promise<void> {
+  let running = false;
+  return async () => {
+    if (running) {
+      console.warn("ward: previous cycle still running, skipping this tick");
+      return;
+    }
+    running = true;
+    try {
+      await task();
+    } finally {
+      running = false;
+    }
+  };
+}
 
 export interface Policy {
   triggerHF: bigint;
@@ -61,44 +80,53 @@ export async function runMaintenance(deps: MaintenanceDeps): Promise<void> {
   }
 }
 
+// Lazily built so importing this module never requires a valid key (tests inject deps and
+// never call these). The keeper wallet/account are created on first real submission.
+let _wallet: ReturnType<typeof createWalletClient> | undefined;
+let _account: ReturnType<typeof privateKeyToAccount> | undefined;
+function keeper() {
+  if (!_wallet || !_account) {
+    _account = privateKeyToAccount(config.keeperKey);
+    _wallet = createWalletClient({ account: _account, chain: robinhoodTestnet, transport: http(config.rpcUrl) });
+  }
+  return { wallet: _wallet, account: _account };
+}
+
+/// Submit a state-changing call, hardened:
+///  1. simulateContract first — a tx that would revert (not keeper / not triggered / too soon)
+///     throws HERE, so we never broadcast a doomed tx and never waste gas.
+///  2. writeContract with the explicit chain (replay-safe, no `chain: null`).
+///  3. waitForTransactionReceipt and assert success — an included-but-reverted tx is not silently
+///     treated as a success.
+async function writeAndWait(
+  address: `0x${string}`,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  abi: any,
+  functionName: string,
+  args: readonly unknown[],
+): Promise<`0x${string}`> {
+  const { wallet, account } = keeper();
+  const { request } = await publicClient.simulateContract({
+    account,
+    address,
+    abi,
+    functionName,
+    args,
+  });
+  const hash = await wallet.writeContract(request);
+  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  if (receipt.status !== "success") throw new Error(`ward: tx ${hash} reverted`);
+  return hash;
+}
+
 export function makeProtect() {
-  const account = privateKeyToAccount(config.keeperKey);
-  const wallet = createWalletClient({ account, transport: http(config.rpcUrl) });
-  return async (user: `0x${string}`) => {
-    await wallet.writeContract({
-      address: config.wardVault,
-      abi: wardVaultAbi,
-      functionName: "protect",
-      args: [user],
-      chain: null,
-    });
-  };
+  return (user: `0x${string}`) => writeAndWait(config.wardVault, wardVaultAbi, "protect", [user]).then(() => {});
 }
 
 export function makePoke() {
-  const account = privateKeyToAccount(config.keeperKey);
-  const wallet = createWalletClient({ account, transport: http(config.rpcUrl) });
-  return async () => {
-    await wallet.writeContract({
-      address: config.priceHistory,
-      abi: priceHistoryAbi,
-      functionName: "poke",
-      args: [],
-      chain: null,
-    });
-  };
+  return () => writeAndWait(config.priceHistory, priceHistoryAbi, "poke", []).then(() => {});
 }
 
 export function makeRefresh() {
-  const account = privateKeyToAccount(config.keeperKey);
-  const wallet = createWalletClient({ account, transport: http(config.rpcUrl) });
-  return async () => {
-    await wallet.writeContract({
-      address: config.riskModel,
-      abi: dynamicRiskAbi,
-      functionName: "refresh",
-      args: [],
-      chain: null,
-    });
-  };
+  return () => writeAndWait(config.riskModel, dynamicRiskAbi, "refresh", []).then(() => {});
 }

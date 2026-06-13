@@ -138,6 +138,12 @@ contract LendingCoreTest is Test {
         assertGt(collateral.balanceOf(liq), 0);
     }
 
+    function test_renounceOwnershipDisabled() public {
+        // renouncing would permanently freeze setRiskModel -> disabled
+        vm.expectRevert(bytes("renounce disabled"));
+        core.renounceOwnership();
+    }
+
     function test_setRiskModelOnlyOwner() public {
         StaticRiskModel other = new StaticRiskModel(address(this));
         vm.prank(address(0xBAD));

@@ -55,6 +55,7 @@ contract WardVault is ReentrancyGuard {
     }
 
     function setPolicy(uint256 triggerHF, uint256 targetHF, address keeper) external {
+        require(triggerHF > 0, "trigger=0"); // R2: a zero trigger never fires -> zombie policy
         require(targetHF >= triggerHF, "target<trigger");
         _policy[msg.sender] = Policy(triggerHF, targetHF, keeper, true);
         emit PolicySet(msg.sender, triggerHF, targetHF, keeper);
