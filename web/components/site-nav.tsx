@@ -6,6 +6,8 @@ import { motion } from "motion/react";
 import { ConnectButton } from "@/components/connect";
 
 function WardMark({ className = "" }: { className?: string }) {
+  // précision figée : évite tout mismatch d'hydratation sur les flottants trig
+  const r3 = (n: number) => Number(n.toFixed(3));
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden>
       <g stroke="var(--ward)" strokeWidth="2.4" strokeLinecap="round">
@@ -16,10 +18,10 @@ function WardMark({ className = "" }: { className?: string }) {
           return (
             <line
               key={i}
-              x1={16 + r1 * Math.cos(a)}
-              y1={16 + r1 * Math.sin(a)}
-              x2={16 + r2 * Math.cos(a)}
-              y2={16 + r2 * Math.sin(a)}
+              x1={r3(16 + r1 * Math.cos(a))}
+              y1={r3(16 + r1 * Math.sin(a))}
+              x2={r3(16 + r2 * Math.cos(a))}
+              y2={r3(16 + r2 * Math.sin(a))}
             />
           );
         })}
