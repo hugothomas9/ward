@@ -116,6 +116,18 @@ contract LendingCore is ReentrancyGuard, Ownable {
         emit Withdrawn(msg.sender, amount);
     }
 
+    event DepositedFor(address indexed user, address indexed payer, uint256 amount);
+
+    /// @notice De-risking primitive: caller adds collateral to `user`'s position. Only ever increases collateral.
+    function depositFor(address user, uint256 amount) external nonReentrant {
+        collateralToken.safeTransferFrom(msg.sender, address(this), amount);
+        _positions[user].collateral += amount;
+        if (_positions[user].lastAccrued == 0) {
+            _positions[user].lastAccrued = block.timestamp;
+        }
+        emit DepositedFor(user, msg.sender, amount);
+    }
+
     /// @notice De-risking primitive: caller repays `user`'s debt. Only ever reduces debt.
     function repayFor(address user, uint256 amount) external nonReentrant returns (uint256 paid) {
         _accrue(user);
