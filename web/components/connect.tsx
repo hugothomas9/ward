@@ -102,15 +102,16 @@ function WalletModal({ onClose }: { onClose: () => void }) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 overflow-y-auto"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
       <div
-        className="absolute inset-0 bg-foreground/30 backdrop-blur-sm"
+        className="fixed inset-0 bg-foreground/30 backdrop-blur-sm"
         onClick={onClose}
       />
+      <div className="relative flex min-h-full items-center justify-center p-4">
       <motion.div
         className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-hairline bg-paper p-6 shadow-2xl"
         initial={{ opacity: 0, y: 16, scale: 0.97 }}
@@ -204,7 +205,7 @@ function WalletModal({ onClose }: { onClose: () => void }) {
                   <div className="relative mt-4 rounded-xl border border-hairline bg-paper p-4">
                     <QRCodeSVG
                       value={WC_URI}
-                      size={168}
+                      size={154}
                       bgColor="transparent"
                       fgColor="#1c1814"
                       level="M"
@@ -255,6 +256,7 @@ function WalletModal({ onClose }: { onClose: () => void }) {
           )}
         </AnimatePresence>
       </motion.div>
+      </div>
     </motion.div>
   );
 }
