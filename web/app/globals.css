@@ -1,0 +1,143 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  /* Sentinel clair — typo distinctive (jamais Inter) */
+  --font-sans: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  --font-heading: var(--font-fraunces), ui-serif, Georgia, serif;
+
+  /* Tokens sémantiques Ward */
+  --color-paper: var(--paper);
+  --color-ward: var(--ward);
+  --color-ward-foreground: var(--ward-foreground);
+  --color-danger: var(--danger);
+  --color-warn: var(--warn);
+  --color-hairline: var(--hairline);
+
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+}
+
+/* ===== Sentinel clair : crème chaud, vert forêt, terracotta, ocre ===== */
+:root {
+  --radius: 0.35rem;
+
+  --background: #f4f1ea;          /* canvas crème */
+  --paper: #fffdf8;              /* cartes, papier chaud */
+  --foreground: #1c1814;        /* encre */
+
+  --card: #fffdf8;
+  --card-foreground: #1c1814;
+  --popover: #fffdf8;
+  --popover-foreground: #1c1814;
+
+  --primary: #1c6b4f;           /* vert Ward */
+  --primary-foreground: #f7f5ef;
+  --ward: #1c6b4f;
+  --ward-foreground: #f3f7f4;
+
+  --secondary: #ece7db;
+  --secondary-foreground: #2b2620;
+  --muted: #ece7db;
+  --muted-foreground: #79705f;  /* gris chaud */
+  --accent: #e7e1d3;
+  --accent-foreground: #1c1814;
+
+  --destructive: #a8331f;       /* rouge terracotta = liquidation */
+  --danger: #a8331f;
+  --warn: #b8791f;              /* ocre = avertissement */
+
+  --hairline: #e3dccd;
+  --border: #e3dccd;
+  --input: #ddd5c4;
+  --ring: #1c6b4f;
+
+  --chart-1: #1c6b4f;
+  --chart-2: #b8791f;
+  --chart-3: #a8331f;
+  --chart-4: #6f8f6a;
+  --chart-5: #c9b896;
+
+  --sidebar: #f4f1ea;
+  --sidebar-foreground: #1c1814;
+  --sidebar-primary: #1c6b4f;
+  --sidebar-primary-foreground: #f7f5ef;
+  --sidebar-accent: #ece7db;
+  --sidebar-accent-foreground: #1c1814;
+  --sidebar-border: #e3dccd;
+  --sidebar-ring: #1c6b4f;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    background-image:
+      radial-gradient(120% 80% at 50% -10%, #faf7f0 0%, #f4f1ea 46%, #efe9dd 100%);
+    background-attachment: fixed;
+  }
+  html {
+    @apply font-sans antialiased;
+  }
+  .tnum { font-variant-numeric: tabular-nums; }
+}
+
+/* grain léger pour la texture papier (pas de fond plat) */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.rise { animation: rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
