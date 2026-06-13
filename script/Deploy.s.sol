@@ -33,6 +33,7 @@ contract Deploy is Script {
         uint256 initialPrice = vm.envOr("INITIAL_PRICE", uint256(250e18));
         // defense in depth: a WAD price for a stock is ~1e18..1e24; reject a raw/unscaled value
         require(initialPrice >= 1e16, "INITIAL_PRICE looks unscaled (expect WAD, e.g. 250e18)");
+        require(initialPrice <= 1e30, "INITIAL_PRICE too large");
 
         vm.startBroadcast(pk);
 

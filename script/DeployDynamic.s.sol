@@ -31,6 +31,7 @@ contract DeployDynamic is Script {
         address collateral = vm.envOr("COLLATERAL", TSLA);
         uint256 initialPriceWad = vm.envOr("INITIAL_PRICE", uint256(250e18));
         require(initialPriceWad >= 1e16, "INITIAL_PRICE looks unscaled (expect WAD)");
+        require(initialPriceWad <= 1e30, "INITIAL_PRICE too large");
 
         vm.startBroadcast(pk);
 

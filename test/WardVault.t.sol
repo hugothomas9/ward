@@ -90,6 +90,13 @@ contract WardVaultTest is Test {
         vault.setPolicy(1.5e18, 1.2e18, keeper);
     }
 
+    // R2: setPolicy(0, ...) must revert — a policy that never triggers is a false sense of security
+    function test_policyZeroTriggerReverts() public {
+        vm.prank(alice);
+        vm.expectRevert(bytes("triggerHF=0"));
+        vault.setPolicy(0, 0, keeper);
+    }
+
     function _fundAndPolicy(uint256 amount) internal {
         vm.startPrank(alice);
         usdg.approve(address(vault), type(uint256).max);

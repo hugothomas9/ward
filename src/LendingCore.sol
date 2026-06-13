@@ -128,8 +128,6 @@ contract LendingCore is ReentrancyGuard, Ownable {
     }
 
     // --- liquidation backstop ---
-    uint256 public constant LIQUIDATION_BONUS_BPS = 1000; // 10%
-
     event Liquidated(address indexed user, address indexed liquidator, uint256 debtRepaid, uint256 collateralSeized);
 
     /// @notice Simple full-position backstop: liquidator repays debt, seizes all collateral.
