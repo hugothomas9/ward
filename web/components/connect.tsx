@@ -2,35 +2,82 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Wallet, Feather, Radio, Loader2, Check, X } from "lucide-react";
+import { Wallet, Loader2, X, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { useWard } from "@/components/ward-provider";
 import { shortAddr } from "@/lib/format";
 
 type Kind = "metamask" | "robinhood" | "walletconnect";
 
-const WALLETS: {
+type WalletDef = {
   kind: Kind;
   name: string;
   desc: string;
-  color: string;
-  Icon: typeof Wallet;
-}[] = [
-  { kind: "robinhood", name: "Robinhood Wallet", desc: "Recommandé sur Robinhood Chain", color: "#00c805", Icon: Feather },
-  { kind: "metamask", name: "MetaMask", desc: "Extension navigateur", color: "#f6851b", Icon: Wallet },
-  { kind: "walletconnect", name: "WalletConnect", desc: "Scanner avec ton mobile", color: "#3b99fc", Icon: Radio },
+  recommended?: boolean;
+  img?: string; // logo couleur (rendu tel quel)
+  mask?: string; // logo mono (recoloré)
+  color?: string;
+};
+
+const WALLETS: WalletDef[] = [
+  {
+    kind: "robinhood",
+    name: "Robinhood Wallet",
+    desc: "Natif sur Robinhood Chain · via WalletConnect",
+    recommended: true,
+    mask: "/wallets/robinhood.svg",
+    color: "#00C805",
+  },
+  {
+    kind: "metamask",
+    name: "MetaMask",
+    desc: "Extension navigateur",
+    img: "/wallets/metamask.svg",
+  },
+  {
+    kind: "walletconnect",
+    name: "WalletConnect",
+    desc: "Scanner avec ton mobile",
+    mask: "/wallets/walletconnect.svg",
+    color: "#3b99fc",
+  },
 ];
+
+function WalletLogo({ w }: { w: WalletDef }) {
+  if (w.img) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={w.img} alt="" className="h-7 w-7 object-contain" />;
+  }
+  return (
+    <span
+      aria-hidden
+      className="h-7 w-7"
+      style={{
+        backgroundColor: w.color,
+        maskImage: `url(${w.mask})`,
+        WebkitMaskImage: `url(${w.mask})`,
+        maskRepeat: "no-repeat",
+        WebkitMaskRepeat: "no-repeat",
+        maskPosition: "center",
+        WebkitMaskPosition: "center",
+        maskSize: "contain",
+        WebkitMaskSize: "contain",
+        display: "block",
+      }}
+    />
+  );
+}
 
 function WalletModal({ onClose }: { onClose: () => void }) {
   const { connect } = useWard();
   const [pending, setPending] = useState<Kind | null>(null);
 
-  const choose = (kind: Kind, name: string) => {
-    setPending(kind);
-    // simulation d'un handshake wallet (le câblage viem réel viendra ensuite)
+  const choose = (w: WalletDef) => {
+    setPending(w.kind);
+    // simulation du handshake wallet (câblage viem réel à venir)
     window.setTimeout(() => {
-      connect(kind);
-      toast.success(`${name} connecté`, {
+      connect(w.kind);
+      toast.success(`${w.name} connecté`, {
         description: "Réseau : Robinhood Chain · testnet (46630)",
       });
       onClose();
@@ -49,7 +96,7 @@ function WalletModal({ onClose }: { onClose: () => void }) {
         onClick={onClose}
       />
       <motion.div
-        className="relative w-full max-w-sm overflow-hidden rounded-xl border border-hairline bg-paper p-6 shadow-2xl"
+        className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-hairline bg-paper p-6 shadow-2xl"
         initial={{ opacity: 0, y: 16, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 16, scale: 0.97 }}
@@ -58,56 +105,63 @@ function WalletModal({ onClose }: { onClose: () => void }) {
         <button
           onClick={onClose}
           className="absolute right-4 top-4 text-muted-foreground transition-colors hover:text-foreground"
+          aria-label="Fermer"
         >
           <X className="h-4 w-4" />
         </button>
 
-        <h2 className="font-serif text-2xl font-semibold tracking-tight">
-          Connecter un wallet
+        {/* header */}
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-background px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ward opacity-60" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-ward" />
+          </span>
+          Robinhood Chain · testnet
+        </span>
+        <h2 className="mt-3 font-serif text-2xl font-semibold tracking-tight">
+          Connecte ton wallet
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Choisis comment te connecter à Ward.
-        </p>
 
+        {/* liste */}
         <div className="mt-5 space-y-2.5">
           {WALLETS.map((w, i) => {
             const isPending = pending === w.kind;
-            const disabled = pending !== null && !isPending;
+            const dimmed = pending !== null && !isPending;
             return (
               <motion.button
                 key={w.kind}
                 disabled={pending !== null}
-                onClick={() => choose(w.kind, w.name)}
+                onClick={() => choose(w)}
                 initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: disabled ? 0.4 : 1, y: 0 }}
+                animate={{ opacity: dimmed ? 0.4 : 1, y: 0 }}
                 transition={{ delay: 0.04 * i }}
-                className="group flex w-full items-center gap-3 rounded-lg border border-hairline bg-background px-3.5 py-3 text-left transition-all hover:border-ward/50 hover:bg-secondary/50 disabled:cursor-not-allowed"
+                className="group flex w-full items-center gap-3.5 rounded-xl border border-hairline bg-background p-3 text-left transition-all hover:border-ward/50 hover:bg-secondary/40 disabled:cursor-not-allowed"
               >
-                <span
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white"
-                  style={{ background: w.color }}
-                >
-                  {isPending ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <w.Icon className="h-5 w-5" />
-                  )}
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-hairline bg-paper">
+                  <WalletLogo w={w} />
                 </span>
-                <span className="flex-1">
-                  <span className="block text-sm font-medium">{w.name}</span>
-                  <span className="block text-xs text-muted-foreground">
-                    {isPending ? "Connexion…" : w.desc}
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{w.name}</span>
+                    {w.recommended && (
+                      <span className="rounded-full bg-ward/10 px-1.5 py-0.5 font-mono text-[9px] font-medium uppercase tracking-wider text-ward">
+                        Recommandé
+                      </span>
+                    )}
+                  </span>
+                  <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                    {w.desc}
                   </span>
                 </span>
+                {isPending ? (
+                  <Loader2 className="h-4 w-4 shrink-0 animate-spin text-ward" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                )}
               </motion.button>
             );
           })}
         </div>
-
-        <p className="mt-5 flex items-center gap-1.5 text-center text-[11px] text-muted-foreground">
-          <Check className="h-3 w-3 text-ward" />
-          Un seul connecteur EVM couvre MetaMask, Robinhood Wallet et WalletConnect.
-        </p>
       </motion.div>
     </motion.div>
   );
