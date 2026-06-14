@@ -191,14 +191,14 @@ function ArmWard() {
               <label className="text-sm font-medium">Trigger HF</label>
               <span className="font-mono text-sm tnum text-warn">{trigger.toFixed(2)}</span>
             </div>
-            <Slider className="mt-3" value={[trigger]} min={1.0} max={1.6} step={0.05} onValueChange={(v) => setTrigger(num1(v))} />
+            <Slider className="mt-3" value={[trigger]} min={1.0} max={2.5} step={0.05} onValueChange={(v) => setTrigger(num1(v))} />
           </div>
           <div>
             <div className="flex items-baseline justify-between">
               <label className="text-sm font-medium">Target HF</label>
               <span className="font-mono text-sm tnum text-ward">{Math.max(target, trigger).toFixed(2)}</span>
             </div>
-            <Slider className="mt-3" value={[Math.max(target, trigger)]} min={1.1} max={2.0} step={0.05} onValueChange={(v) => setTarget(num1(v))} />
+            <Slider className="mt-3" value={[Math.max(target, trigger)]} min={1.1} max={3.0} step={0.05} onValueChange={(v) => setTarget(num1(v))} />
           </div>
         </div>
 
