@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ward — Pitch Deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#f4f1ea; --paper:#fffdf8; --ink:#1c1814; --muted:#79705f;
+    --ward:#1c6b4f; --danger:#a8331f; --warn:#b8791f; --hairline:#e3dccd; --secondary:#ece7db;
+    --serif:"Fraunces",Georgia,serif; --sans:"Hanken Grotesk",system-ui,sans-serif; --mono:"IBM Plex Mono",monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:var(--sans); color:var(--ink); overflow:hidden;
+    background:radial-gradient(120% 80% at 50% -10%, #faf7f0 0%, #f4f1ea 46%, #efe9dd 100%);
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.035;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .deck{position:fixed;inset:0;z-index:1;}
+  .slide{
+    position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;
+    padding:7vh 9vw; opacity:0; transform:translateY(14px); pointer-events:none;
+    transition:opacity .45s cubic-bezier(.22,1,.36,1), transform .45s cubic-bezier(.22,1,.36,1);
+    max-width:1400px;margin:0 auto;
+  }
+  .slide.active{opacity:1;transform:none;pointer-events:auto;}
+  .eyebrow{font-family:var(--mono);font-size:.8rem;text-transform:uppercase;letter-spacing:.22em;color:var(--muted);}
+  h1{font-family:var(--serif);font-weight:600;letter-spacing:-.02em;line-height:1.03;}
+  h2{font-family:var(--serif);font-weight:600;letter-spacing:-.02em;line-height:1.05;}
+  .display{font-size:clamp(2.6rem,6.2vw,5.2rem);}
+  .title{font-size:clamp(2.2rem,5vw,4rem);margin-top:1.2rem;}
+  .lede{font-size:clamp(1.05rem,1.7vw,1.45rem);line-height:1.5;color:var(--muted);max-width:40ch;margin-top:1.5rem;}
+  .green{color:var(--ward);}
+  .row{display:flex;gap:1rem;flex-wrap:wrap;margin-top:2.4rem;}
+  .card{background:var(--paper);border:1px solid var(--hairline);border-radius:14px;padding:1.5rem 1.6rem;flex:1;min-width:220px;
+    box-shadow:0 1px 0 rgba(28,24,20,.04),0 18px 40px -28px rgba(28,24,20,.35);}
+  .card .k{font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);}
+  .card h3{font-family:var(--serif);font-weight:600;font-size:1.3rem;margin-top:.5rem;letter-spacing:-.01em;}
+  .card p{font-size:.95rem;line-height:1.5;color:var(--muted);margin-top:.5rem;}
+  .num{display:flex;align-items:center;justify-content:center;width:2rem;height:2rem;border-radius:8px;background:rgba(28,107,79,.1);color:var(--ward);font-family:var(--mono);font-size:.85rem;font-weight:500;}
+  .list{margin-top:2rem;display:flex;flex-direction:column;gap:.9rem;max-width:60ch;}
+  .li{display:flex;gap:1rem;align-items:flex-start;font-size:clamp(1rem,1.5vw,1.2rem);line-height:1.45;}
+  .li .dot{margin-top:.55em;width:7px;height:7px;border-radius:50%;background:var(--ward);flex:none;}
+  .li b{font-weight:600;}
+  .li .sub{color:var(--muted);}
+  .mono{font-family:var(--mono);}
+  .pill{display:inline-flex;align-items:center;gap:.5rem;border:1px solid var(--hairline);background:var(--paper);border-radius:999px;padding:.4rem .9rem;font-family:var(--mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);}
+  .brand{display:flex;align-items:center;gap:.7rem;}
+  .brand .name{font-family:var(--serif);font-weight:600;font-size:2.2rem;letter-spacing:-.02em;}
+  /* HF flow visual */
+  .flow{display:flex;align-items:center;gap:1.4rem;margin-top:2.6rem;flex-wrap:wrap;}
+  .hf{background:var(--paper);border:1px solid var(--hairline);border-radius:14px;padding:1.4rem 1.8rem;text-align:center;min-width:170px;}
+  .hf .lbl{font-family:var(--mono);font-size:.65rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);}
+  .hf .v{font-family:var(--serif);font-weight:600;font-size:3rem;line-height:1;margin-top:.3rem;}
+  .arrow{font-family:var(--mono);color:var(--muted);font-size:1.4rem;}
+  .footnote{position:fixed;left:9vw;bottom:4vh;font-family:var(--mono);font-size:.75rem;color:var(--muted);z-index:2;}
+  /* nav */
+  .nav{position:fixed;right:9vw;bottom:4vh;display:flex;align-items:center;gap:1rem;z-index:3;font-family:var(--mono);font-size:.8rem;color:var(--muted);}
+  .nav button{font-family:var(--mono);border:1px solid var(--hairline);background:var(--paper);color:var(--ink);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:1rem;transition:border-color .2s;}
+  .nav button:hover{border-color:var(--ward);}
+  .progress{position:fixed;top:0;left:0;height:3px;background:var(--ward);z-index:4;transition:width .4s ease;}
+  .sunburst{width:46px;height:46px;}
+  a{color:var(--ward);}
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+  <!-- 1 — Title -->
+  <section class="slide active">
+    <div class="brand">
+      <svg class="sunburst" viewBox="0 0 32 32"><g stroke="#1c6b4f" stroke-width="2.4" stroke-linecap="round">
+        <line x1="21.5" y1="16" x2="30" y2="16"/><line x1="20.76" y1="18.75" x2="25.09" y2="21.25"/>
+        <line x1="18.75" y1="20.76" x2="21.25" y2="25.09"/><line x1="16" y1="21.5" x2="16" y2="30"/>
+        <line x1="13.25" y1="20.76" x2="10.75" y2="25.09"/><line x1="11.24" y1="18.75" x2="6.91" y2="21.25"/>
+        <line x1="10.5" y1="16" x2="2" y2="16"/><line x1="11.24" y1="13.25" x2="6.91" y2="10.75"/>
+        <line x1="13.25" y1="11.24" x2="10.75" y2="6.91"/><line x1="16" y1="10.5" x2="16" y2="2"/>
+        <line x1="18.75" y1="11.24" x2="21.25" y2="6.91"/><line x1="20.76" y1="13.25" x2="25.09" y2="10.75"/>
+      </g><circle cx="16" cy="16" r="3.2" fill="#1c6b4f"/></svg>
+      <span class="name">Ward</span>
+    </div>
+    <h1 class="display" style="margin-top:2.4rem;">Borrow against your stocks.<br><span class="green">Without getting liquidated.</span></h1>
+    <p class="lede">A stock-backed credit line with an anti-liquidation autopilot — built natively on Robinhood Chain.</p>
+    <div style="margin-top:2.4rem;"><span class="pill">Arbitrum Open House London · Robinhood Chain</span></div>
+  </section>
+
+  <!-- 2 — Problem -->
+  <section class="slide">
+    <div class="eyebrow">The problem</div>
+    <h2 class="title">A 16% dip can wipe you out.</h2>
+    <p class="lede" style="max-width:52ch;">Borrowing against volatile tokenized stocks is dangerous. One bad day pushes a healthy loan below its liquidation line — and your collateral is seized at the worst possible price. Most lending protocols just liquidate you and move on.</p>
+  </section>
+
+  <!-- 3 — How it works -->
+  <section class="slide">
+    <div class="eyebrow">What Ward does</div>
+    <h2 class="title">An autopilot that keeps your loan alive.</h2>
+    <div class="row">
+      <div class="card"><div class="num">1</div><h3>Deposit</h3><p>Put up a tokenized stock (e.g. TSLA) as collateral.</p></div>
+      <div class="card"><div class="num">2</div><h3>Borrow</h3><p>Draw USDG against it.</p></div>
+      <div class="card"><div class="num">3</div><h3>Buffer</h3><p>Set aside a small USDG safety buffer + a trigger/target.</p></div>
+      <div class="card"><div class="num">4</div><h3>Protected</h3><p>A keeper repays from your buffer before liquidation can hit.</p></div>
+    </div>
+  </section>
+
+  <!-- 4 — Stylus -->
+  <section class="slide">
+    <div class="eyebrow">Differentiator 1</div>
+    <h2 class="title">A volatility-aware risk engine, <span class="green">in Stylus.</span></h2>
+    <div class="list">
+      <div class="li"><span class="dot"></span><span>The liquidation threshold isn&apos;t fixed — it reads <b>realized volatility</b> from on-chain price history and adapts. Tighter when markets turn violent, looser when they calm. Rate-limited, so it never over-reacts.</span></div>
+      <div class="li"><span class="dot"></span><span>Written in <b>Rust</b>, compiled to WASM with <b>Arbitrum Stylus</b> — an order of magnitude cheaper than Solidity. Cheap enough to run on every position, <b>verifiably on-chain</b>.</span></div>
+    </div>
+  </section>
+
+  <!-- 5 — Agent -->
+  <section class="slide">
+    <div class="eyebrow">Differentiator 2</div>
+    <h2 class="title">An agent you don&apos;t have to trust.</h2>
+    <div class="list">
+      <div class="li"><span class="dot"></span><span>An autonomous keeper watches your health factor <b>every block</b> and acts before liquidation.</span></div>
+      <div class="li"><span class="dot"></span><span>Its power is deliberately tiny: it can <b>only</b> call <span class="mono">protect()</span> — repay your debt from <b>your own buffer</b>.</span></div>
+      <div class="li"><span class="dot"></span><span>It can <b>never</b> re-borrow, swap, move funds, or open positions. Invariant <b>enforced by the contract</b> and covered by tests.</span></div>
+    </div>
+  </section>
+
+  <!-- 6 — Money shot -->
+  <section class="slide">
+    <div class="eyebrow">Live demo</div>
+    <h2 class="title">Crash the price. Ward saves it.</h2>
+    <div class="flow">
+      <div class="hf"><div class="lbl">Before</div><div class="v">1.31</div></div>
+      <span class="arrow">— crash −16% →</span>
+      <div class="hf"><div class="lbl">At the edge</div><div class="v" style="color:var(--danger)">1.08</div></div>
+      <span class="arrow">— Ward protect() →</span>
+      <div class="hf"><div class="lbl">Restored</div><div class="v green">1.50</div></div>
+    </div>
+    <p class="lede" style="margin-top:2.4rem;">The price drop, the engine refresh and the protection are <b style="color:var(--ink)">real transactions</b> — provable on the explorer. Collateral kept, liquidation avoided.</p>
+  </section>
+
+  <!-- 7 — Why RH chain -->
+  <section class="slide">
+    <div class="eyebrow">Why Robinhood Chain</div>
+    <h2 class="title">Credit belongs next to the stocks.</h2>
+    <p class="lede" style="max-width:54ch;">Robinhood Chain is where tokenized stocks live and where a consumer audience already is. Stock-backed credit should sit right next to the stocks themselves — same chain, same assets (we use the <b style="color:var(--ink)">real TSLA token</b> as collateral), same users.</p>
+  </section>
+
+  <!-- 8 — Status -->
+  <section class="slide">
+    <div class="eyebrow">Status</div>
+    <h2 class="title">Live on testnet, end-to-end.</h2>
+    <div class="row">
+      <div class="card"><h3>On-chain</h3><p>Lending core, WardVault, dynamic risk model & the <b>Stylus engine</b> — all deployed on Robinhood Chain (46630).</p></div>
+      <div class="card"><h3>Tested</h3><p>92 Solidity tests passing · keeper-only security invariant verified.</p></div>
+      <div class="card"><h3>Demoable</h3><p>Full app at <b>ward-rho.vercel.app</b> — connect, borrow, arm Ward, crash, watch it protect.</p></div>
+    </div>
+  </section>
+
+  <!-- 9 — Roadmap -->
+  <section class="slide">
+    <div class="eyebrow">What&apos;s next</div>
+    <h2 class="title">From testnet to mainnet.</h2>
+    <div class="list">
+      <div class="li"><span class="dot"></span><span><b>Fixed-rate dated loans</b> <span class="sub">— lock a rate for a term (already prototyped).</span></span></div>
+      <div class="li"><span class="dot"></span><span><b>Always-on keeper</b> <span class="sub">— 24/7 autonomous protection.</span></span></div>
+      <div class="li"><span class="dot"></span><span><b>Multi-collateral risk</b> <span class="sub">— portfolio-level VaR.</span></span></div>
+      <div class="li"><span class="dot"></span><span><b>Lender yield side</b> <span class="sub">— shares + interest for liquidity providers.</span></span></div>
+      <div class="li"><span class="dot"></span><span><b>Mainnet</b> <span class="sub">— real USDG, Robinhood Wallet, production Robinhood Chain.</span></span></div>
+    </div>
+  </section>
+
+  <!-- 10 — Close -->
+  <section class="slide">
+    <div class="brand">
+      <svg class="sunburst" viewBox="0 0 32 32"><g stroke="#1c6b4f" stroke-width="2.4" stroke-linecap="round">
+        <line x1="21.5" y1="16" x2="30" y2="16"/><line x1="20.76" y1="18.75" x2="25.09" y2="21.25"/>
+        <line x1="18.75" y1="20.76" x2="21.25" y2="25.09"/><line x1="16" y1="21.5" x2="16" y2="30"/>
+        <line x1="13.25" y1="20.76" x2="10.75" y2="25.09"/><line x1="11.24" y1="18.75" x2="6.91" y2="21.25"/>
+        <line x1="10.5" y1="16" x2="2" y2="16"/><line x1="11.24" y1="13.25" x2="6.91" y2="10.75"/>
+        <line x1="13.25" y1="11.24" x2="10.75" y2="6.91"/><line x1="16" y1="10.5" x2="16" y2="2"/>
+        <line x1="18.75" y1="11.24" x2="21.25" y2="6.91"/><line x1="20.76" y1="13.25" x2="25.09" y2="10.75"/>
+      </g><circle cx="16" cy="16" r="3.2" fill="#1c6b4f"/></svg>
+      <span class="name">Ward</span>
+    </div>
+    <h1 class="display" style="margin-top:2rem;">Borrow against your stocks,<br><span class="green">without getting liquidated.</span></h1>
+    <p class="lede mono" style="color:var(--ink);font-size:1.1rem;">ward-rho.vercel.app</p>
+  </section>
+
+</div>
+
+<div class="footnote" id="counter">01 / 10</div>
+<div class="nav">
+  <button id="prev" aria-label="Previous">‹</button>
+  <button id="next" aria-label="Next">›</button>
+</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  let i=0;
+  const counter=document.getElementById('counter');
+  const progress=document.getElementById('progress');
+  function show(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    counter.textContent=String(i+1).padStart(2,'0')+' / '+String(slides.length).padStart(2,'0');
+    progress.style.width=((i+1)/slides.length*100)+'%';
+  }
+  document.getElementById('next').onclick=()=>show(i+1);
+  document.getElementById('prev').onclick=()=>show(i-1);
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();show(i+1);}
+    if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();show(i-1);}
+    if(e.key==='Home')show(0); if(e.key==='End')show(slides.length-1);
+    if(e.key==='f'){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();}
+  });
+  document.addEventListener('click',e=>{ if(e.target.closest('a,button'))return; show(i+1); });
+  const start=parseInt(location.hash.slice(1),10);
+  show(Number.isFinite(start)&&start>0?start-1:0);
+</script>
+</body>
+</html>
