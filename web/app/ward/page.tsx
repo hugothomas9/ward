@@ -30,9 +30,10 @@ import { usd2, groupInt, num1, hfColor, hfLabel } from "@/lib/format";
 function PositionPanel() {
   const { collateral, debt, healthFactor, price, buffer, policyActive } = useWard();
   const thr = LIQ_THRESHOLD;
+  const armed = policyActive && buffer > 0;
   const liqPrice = collateral > 0 && debt > 0 ? debt / (collateral * thr) : 0;
   const protectedPrice =
-    collateral > 0 && policyActive
+    collateral > 0 && armed
       ? Math.max(debt - buffer, 0) / (collateral * thr)
       : liqPrice;
 
@@ -40,7 +41,7 @@ function PositionPanel() {
     <div className="rounded-xl border border-hairline bg-paper p-6">
       <div className="flex items-center justify-between">
         <h2 className="font-serif text-xl font-semibold tracking-tight">Ta position</h2>
-        {policyActive ? (
+        {armed ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-ward/10 px-2.5 py-1 font-mono text-[11px] font-medium uppercase tracking-wider text-ward">
             <ShieldCheck className="h-3.5 w-3.5" /> Ward armé
           </span>
@@ -85,10 +86,10 @@ function PositionPanel() {
         </div>
         <div>
           <dt className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-            <TrendingDown className="h-3 w-3" /> {policyActive ? "Protégé jusqu'à" : "Liquidation"}
+            <TrendingDown className="h-3 w-3" /> {armed ? "Protégé jusqu'à" : "Liquidation"}
           </dt>
-          <dd className="mt-1 font-medium tnum" style={{ color: policyActive ? "var(--ward)" : "var(--danger)" }}>
-            {usd2(policyActive ? protectedPrice : liqPrice)}
+          <dd className="mt-1 font-medium tnum" style={{ color: armed ? "var(--ward)" : "var(--danger)" }}>
+            {usd2(armed ? protectedPrice : liqPrice)}
           </dd>
         </div>
       </dl>
@@ -105,6 +106,7 @@ function ArmWard() {
   const [add, setAdd] = useState(0);
   const [trigger, setTrigger] = useState(1.2);
   const [target, setTarget] = useState(1.5);
+  const [defundAmt, setDefundAmt] = useState(0);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -138,6 +140,21 @@ function ArmWard() {
       const gw = parseUnits(Math.max(target, trigger).toFixed(2), 18);
       await sendTx({ address: ADDR.wardVault, abi: wardVaultAbi, functionName: "setPolicy", args: [tw, gw, ADDR.deployer] }, { pending: "Activation de Ward…", success: "Ward activé sur ta position" });
       refetchAll();
+    } catch {} finally { setBusy(false); }
+  };
+
+  const defund = async (all = false) => {
+    const value = all ? buffer : defundAmt;
+    if (value <= 0 || busy) return;
+    setBusy(true);
+    try {
+      const w = parseUnits(value.toFixed(6), USDG_DECIMALS);
+      await sendTx(
+        { address: ADDR.wardVault, abi: wardVaultAbi, functionName: "defund", args: [w] },
+        { pending: "Retrait du buffer…", success: all ? "Ward désarmé · buffer récupéré" : "Buffer récupéré" },
+      );
+      refetchAll();
+      setDefundAmt(0);
     } catch {} finally { setBusy(false); }
   };
 
@@ -216,6 +233,26 @@ function ArmWard() {
           </button>
         </div>
       </div>
+
+      {buffer > 0 && (
+        <div className="mt-6 border-t border-hairline pt-5">
+          <div className="flex items-baseline justify-between">
+            <label className="text-sm font-medium">
+              Récupérer le buffer <span className="text-muted-foreground">(dispo {groupInt(buffer)})</span>
+            </label>
+            <span className="font-mono text-sm tnum">−{groupInt(defundAmt)} USDG</span>
+          </div>
+          <Slider className="mt-3" value={[defundAmt]} min={0} max={Math.max(Math.round(buffer), 1)} step={10} onValueChange={(v) => setDefundAmt(num1(v))} />
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <button onClick={() => defund(false)} disabled={defundAmt <= 0 || busy} className="flex-1 rounded-md border border-hairline py-2.5 text-sm font-medium transition-colors hover:border-ward/50 disabled:opacity-40">
+              Récupérer {groupInt(defundAmt)} USDG
+            </button>
+            <button onClick={() => defund(true)} disabled={busy} className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-md border border-danger/40 py-2.5 text-sm font-medium text-danger transition-colors hover:bg-danger/8 disabled:opacity-40">
+              <ShieldOff className="h-4 w-4" /> Désarmer Ward (tout retirer)
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

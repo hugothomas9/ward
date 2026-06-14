@@ -34,6 +34,7 @@ type WardState = {
   // marché (public, lu même déconnecté)
   price: number; // TSLA en USD
   thresholdBps: number; // seuil de liquidation courant (bps)
+  poolLiquidity: number; // USDG dispo dans le pool
 
   // soldes du wallet connecté
   ethBalance: number;
@@ -99,6 +100,15 @@ export function WardProvider({ children }: { children: ReactNode }) {
     ...q(enabled),
   });
 
+  // liquidité du pool (public)
+  const pool = useReadContract({
+    address: ADDR.usdg,
+    abi: erc20Abi,
+    functionName: "balanceOf",
+    args: [ADDR.lendingCore],
+    query: { refetchInterval: 10_000 },
+  });
+
   // ---- position ----
   const position = useReadContract({
     address: ADDR.lendingCore,
@@ -151,6 +161,7 @@ export function WardProvider({ children }: { children: ReactNode }) {
 
       price,
       thresholdBps,
+      poolLiquidity: toNum(pool.data as bigint | undefined, USDG_DECIMALS),
 
       ethBalance: eth.data ? Number(eth.data.value) / 1e18 : 0,
       tslaBalance: toNum(tsla.data as bigint | undefined, TSLA_DECIMALS),
@@ -170,6 +181,7 @@ export function WardProvider({ children }: { children: ReactNode }) {
       refetchAll: () => {
         feed.refetch();
         threshold.refetch();
+        pool.refetch();
         eth.refetch();
         tsla.refetch();
         usdg.refetch();
@@ -187,6 +199,7 @@ export function WardProvider({ children }: { children: ReactNode }) {
     connector,
     feed.data,
     threshold.data,
+    pool.data,
     eth.data,
     tsla.data,
     usdg.data,
