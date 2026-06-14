@@ -1,116 +1,200 @@
 "use client";
 
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 import {
-  createContext,
-  useContext,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+  useAccount,
+  useBalance,
+  useDisconnect,
+  useReadContract,
+} from "wagmi";
+import { ADDR, TSLA_DECIMALS, USDG_DECIMALS } from "@/lib/contracts";
 import {
-  INITIAL_CREDITS,
-  INITIAL_PRICE,
-  type Credit,
-  collateralValue,
-  healthFactor,
-} from "@/lib/ward";
+  erc20Abi,
+  lendingCoreAbi,
+  wardVaultAbi,
+  aggregatorAbi,
+  dynamicRiskAbi,
+} from "@/lib/abi";
 
-type WalletKind = "metamask" | "robinhood" | "walletconnect";
+const toNum = (v: bigint | undefined | null, dec: number) =>
+  v === undefined || v === null ? 0 : Number(v) / 10 ** dec;
+
+// HF en WAD ; dette nulle => uint256 max => on renvoie Infinity
+const toHf = (v: bigint | undefined) => {
+  if (v === undefined) return Infinity;
+  if (v > 10n ** 30n) return Infinity;
+  return Number(v) / 1e18;
+};
 
 type WardState = {
   connected: boolean;
-  address: string;
-  wallet: WalletKind | null;
-  price: number; // TSLA
-  cashUSDG: number;
-  walletTSLA: number;
-  credits: Credit[];
+  address: `0x${string}` | undefined;
+  connectorName: string | undefined;
 
-  // dérivés
-  netWorth: number;
-  totalCollateralValue: number;
-  totalDebt: number;
-  bufferTotal: number;
-  hfOf: (c: Credit) => number;
+  // marché (public, lu même déconnecté)
+  price: number; // TSLA en USD
+  thresholdBps: number; // seuil de liquidation courant (bps)
 
-  // actions
-  connect: (kind: WalletKind) => void;
+  // soldes du wallet connecté
+  ethBalance: number;
+  tslaBalance: number;
+  usdgBalance: number;
+
+  // position on-chain
+  collateral: number; // TSLA
+  debt: number; // USDG
+  healthFactor: number;
+  hasPosition: boolean;
+
+  // Ward
+  buffer: number; // USDG
+  triggerHF: number;
+  targetHF: number;
+  policyActive: boolean;
+
+  isLoading: boolean;
+  refetchAll: () => void;
   disconnect: () => void;
-  openPosition: (input: { collateral: number; debt: number }) => string;
-  setPolicy: (
-    id: string,
-    patch: Partial<Pick<Credit, "warded" | "buffer" | "triggerHF" | "targetHF">>,
-  ) => void;
 };
 
 const Ctx = createContext<WardState | null>(null);
 
-const DEMO_ADDRESS = "0xDA547bb1e6a9ED39c375703A75e13a82FCefc85E";
-
 export function WardProvider({ children }: { children: ReactNode }) {
-  const [connected, setConnected] = useState(false);
-  const [wallet, setWallet] = useState<WalletKind | null>(null);
-  const [price] = useState(INITIAL_PRICE);
-  const [cashUSDG, setCashUSDG] = useState(1200);
-  const [walletTSLA, setWalletTSLA] = useState(8);
-  const [credits, setCredits] = useState<Credit[]>(INITIAL_CREDITS);
+  const { address, isConnected, connector } = useAccount();
+  const { disconnect } = useDisconnect();
+  const enabled = isConnected && !!address;
+  const q = (extra = true) => ({
+    query: { enabled: extra, refetchInterval: 10_000 },
+  });
+
+  // ---- marché (public) ----
+  const feed = useReadContract({
+    address: ADDR.feed,
+    abi: aggregatorAbi,
+    functionName: "latestRoundData",
+    query: { refetchInterval: 10_000 },
+  });
+  const threshold = useReadContract({
+    address: ADDR.riskModel,
+    abi: dynamicRiskAbi,
+    functionName: "liquidationThresholdBps",
+    args: [ADDR.tsla],
+    query: { refetchInterval: 10_000 },
+  });
+
+  // ---- soldes ----
+  const eth = useBalance({ address, query: { enabled, refetchInterval: 10_000 } });
+  const tsla = useReadContract({
+    address: ADDR.tsla,
+    abi: erc20Abi,
+    functionName: "balanceOf",
+    args: [address!],
+    ...q(enabled),
+  });
+  const usdg = useReadContract({
+    address: ADDR.usdg,
+    abi: erc20Abi,
+    functionName: "balanceOf",
+    args: [address!],
+    ...q(enabled),
+  });
+
+  // ---- position ----
+  const position = useReadContract({
+    address: ADDR.lendingCore,
+    abi: lendingCoreAbi,
+    functionName: "positionOf",
+    args: [address!],
+    ...q(enabled),
+  });
+  const hf = useReadContract({
+    address: ADDR.lendingCore,
+    abi: lendingCoreAbi,
+    functionName: "healthFactor",
+    args: [address!],
+    ...q(enabled),
+  });
+
+  // ---- Ward ----
+  const buffer = useReadContract({
+    address: ADDR.wardVault,
+    abi: wardVaultAbi,
+    functionName: "bufferOf",
+    args: [address!],
+    ...q(enabled),
+  });
+  const policy = useReadContract({
+    address: ADDR.wardVault,
+    abi: wardVaultAbi,
+    functionName: "policyOf",
+    args: [address!],
+    ...q(enabled),
+  });
 
   const value = useMemo<WardState>(() => {
-    const hfOf = (c: Credit) => healthFactor(c, price);
-    const totalCollateralValue = credits.reduce(
-      (s, c) => s + collateralValue(c, price),
-      0,
-    );
-    const totalDebt = credits.reduce((s, c) => s + c.debt, 0);
-    const bufferTotal = credits.reduce((s, c) => s + c.buffer, 0);
-    const netWorth =
-      cashUSDG + walletTSLA * price + totalCollateralValue - totalDebt;
+    const feedAnswer = feed.data?.[1] as bigint | undefined;
+    const price = feedAnswer ? Number(feedAnswer) / 1e8 : 0;
+    const thresholdBps = threshold.data ? Number(threshold.data) : 8000;
+
+    const pos = position.data as readonly [bigint, bigint] | undefined;
+    const collateral = toNum(pos?.[0], TSLA_DECIMALS);
+    const debt = toNum(pos?.[1], USDG_DECIMALS);
+
+    const pol = policy.data as
+      | readonly [bigint, bigint, `0x${string}`, boolean]
+      | undefined;
 
     return {
-      connected,
-      address: DEMO_ADDRESS,
-      wallet,
+      connected: isConnected,
+      address,
+      connectorName: connector?.name,
+
       price,
-      cashUSDG,
-      walletTSLA,
-      credits,
-      netWorth,
-      totalCollateralValue,
-      totalDebt,
-      bufferTotal,
-      hfOf,
-      connect: (kind) => {
-        setWallet(kind);
-        setConnected(true);
+      thresholdBps,
+
+      ethBalance: eth.data ? Number(eth.data.value) / 1e18 : 0,
+      tslaBalance: toNum(tsla.data as bigint | undefined, TSLA_DECIMALS),
+      usdgBalance: toNum(usdg.data as bigint | undefined, USDG_DECIMALS),
+
+      collateral,
+      debt,
+      healthFactor: toHf(hf.data as bigint | undefined),
+      hasPosition: debt > 0 || collateral > 0,
+
+      buffer: toNum(buffer.data as bigint | undefined, USDG_DECIMALS),
+      triggerHF: pol ? Number(pol[0]) / 1e18 : 0,
+      targetHF: pol ? Number(pol[1]) / 1e18 : 0,
+      policyActive: pol ? pol[3] : false,
+
+      isLoading: enabled && (position.isLoading || hf.isLoading),
+      refetchAll: () => {
+        feed.refetch();
+        threshold.refetch();
+        eth.refetch();
+        tsla.refetch();
+        usdg.refetch();
+        position.refetch();
+        hf.refetch();
+        buffer.refetch();
+        policy.refetch();
       },
-      disconnect: () => {
-        setConnected(false);
-        setWallet(null);
-      },
-      openPosition: ({ collateral, debt }) => {
-        const id = "c" + (credits.length + 1) + "-" + collateral + "x" + debt;
-        setWalletTSLA((b) => Math.max(b - collateral, 0));
-        setCashUSDG((b) => b + debt);
-        setCredits((cs) => [
-          ...cs,
-          {
-            id,
-            collateral,
-            debt,
-            warded: true,
-            buffer: Math.round(debt * 0.3),
-            triggerHF: 1.2,
-            targetHF: 1.5,
-          },
-        ]);
-        return id;
-      },
-      setPolicy: (id, patch) =>
-        setCredits((cs) =>
-          cs.map((c) => (c.id === id ? { ...c, ...patch } : c)),
-        ),
+      disconnect,
     };
-  }, [connected, wallet, price, cashUSDG, walletTSLA, credits]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    isConnected,
+    address,
+    connector,
+    feed.data,
+    threshold.data,
+    eth.data,
+    tsla.data,
+    usdg.data,
+    position.data,
+    hf.data,
+    buffer.data,
+    policy.data,
+  ]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

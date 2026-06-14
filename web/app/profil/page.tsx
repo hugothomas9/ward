@@ -5,19 +5,13 @@ import { Copy, Check, LogOut, ExternalLink, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { useWard } from "@/components/ward-provider";
 import { ConnectButton } from "@/components/connect";
+import { FaucetPanel } from "@/components/faucet-panel";
 import { Reveal } from "@/components/reveal";
 import { DEPLOYMENTS } from "@/lib/ward";
-import { usd, shortAddr } from "@/lib/format";
-
-const WALLET_NAMES: Record<string, string> = {
-  metamask: "MetaMask",
-  robinhood: "Robinhood Wallet",
-  walletconnect: "WalletConnect",
-};
+import { shortAddr } from "@/lib/format";
 
 export default function ProfilPage() {
-  const { connected, address, wallet, cashUSDG, walletTSLA, price, disconnect } =
-    useWard();
+  const { connected, address, connectorName, disconnect } = useWard();
   const [copied, setCopied] = useState(false);
 
   if (!connected) {
@@ -38,6 +32,7 @@ export default function ProfilPage() {
   }
 
   const copy = () => {
+    if (!address) return;
     navigator.clipboard?.writeText(address);
     setCopied(true);
     toast.success("Adresse copiée");
@@ -64,10 +59,10 @@ export default function ProfilPage() {
               />
               <div>
                 <div className="font-mono text-sm font-medium tnum">
-                  {shortAddr(address)}
+                  {address ? shortAddr(address) : "—"}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {wallet ? WALLET_NAMES[wallet] : "Wallet"}
+                  {connectorName ?? "Wallet"}
                 </div>
               </div>
               <button
@@ -89,9 +84,7 @@ export default function ProfilPage() {
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ward opacity-60" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-ward" />
                 </span>
-                <span className="text-sm font-medium">
-                  {DEPLOYMENTS.chainName}
-                </span>
+                <span className="text-sm font-medium">{DEPLOYMENTS.chainName}</span>
               </div>
               <span className="font-mono text-xs text-muted-foreground tnum">
                 chain {DEPLOYMENTS.chainId}
@@ -110,30 +103,9 @@ export default function ProfilPage() {
           </div>
         </Reveal>
 
-        {/* soldes */}
+        {/* faucet */}
         <Reveal delay={0.08}>
-          <div className="rounded-xl border border-hairline bg-paper p-6">
-            <div className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
-              Soldes disponibles
-            </div>
-            <dl className="mt-4 space-y-4">
-              <div className="flex items-center justify-between border-b border-hairline pb-4">
-                <dt className="text-sm text-muted-foreground">USDG (cash)</dt>
-                <dd className="font-mono text-lg font-medium tnum">
-                  {usd(cashUSDG)}
-                </dd>
-              </div>
-              <div className="flex items-center justify-between">
-                <dt className="text-sm text-muted-foreground">TSLA (wallet)</dt>
-                <dd className="font-mono text-lg font-medium tnum">
-                  {walletTSLA} TSLA
-                  <span className="ml-2 text-xs text-muted-foreground">
-                    ≈ {usd(walletTSLA * price)}
-                  </span>
-                </dd>
-              </div>
-            </dl>
-          </div>
+          <FaucetPanel />
         </Reveal>
       </div>
 
