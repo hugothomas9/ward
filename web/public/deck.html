@@ -66,6 +66,8 @@
   .nav button{font-family:var(--mono);border:1px solid var(--hairline);background:var(--paper);color:var(--ink);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:1rem;transition:border-color .2s;}
   .nav button:hover{border-color:var(--ward);}
   .progress{position:fixed;top:0;left:0;height:3px;background:var(--ward);z-index:4;transition:width .4s ease;}
+  body.export .nav,body.export #counter,body.export .progress{display:none!important;}
+  body.export .slide{transition:none!important;}
   .sunburst{width:46px;height:46px;}
   a{color:var(--ward);}
 </style>
@@ -222,6 +224,7 @@
     if(e.key==='f'){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();}
   });
   document.addEventListener('click',e=>{ if(e.target.closest('a,button'))return; show(i+1); });
+  if(location.search.includes('export'))document.body.classList.add('export');
   const start=parseInt(location.hash.slice(1),10);
   show(Number.isFinite(start)&&start>0?start-1:0);
 </script>
