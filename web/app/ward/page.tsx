@@ -154,6 +154,16 @@ function ArmWard() {
         protégera ta position si le HF passe sous le trigger.
       </p>
 
+      {policyActive && buffer === 0 && (
+        <div className="mt-4 flex items-start gap-2.5 rounded-md border border-warn/40 bg-warn/10 px-3.5 py-3 text-sm">
+          <ShieldOff className="mt-0.5 h-4 w-4 shrink-0 text-warn" />
+          <span className="text-foreground/80">
+            Ward est armé <b>mais ton buffer est vide</b> — il ne pourra rien
+            rembourser. Alimente-le ci-dessous pour qu&apos;il soit opérationnel.
+          </span>
+        </div>
+      )}
+
       <div className="mt-5 grid gap-7 md:grid-cols-2">
         <div className="space-y-7">
           {/* buffer */}
