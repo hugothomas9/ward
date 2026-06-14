@@ -118,9 +118,13 @@ function WalletModal({ onClose }: { onClose: () => void }) {
       if (metamaskConnector) doConnect(w, metamaskConnector);
       else setErr("MetaMask introuvable — installe l'extension du navigateur.");
     } else {
-      // Robinhood : provider in-app si présent, sinon WalletConnect, sinon QR téléphone
+      // Robinhood : provider in-app si présent, sinon WalletConnect (QR à scanner
+      // avec l'app), sinon repli QR "ouvre sur ton téléphone"
       if (robinhoodConnector) doConnect(w, robinhoodConnector);
-      else if (wcConnector) doConnect(w, wcConnector);
+      else if (wcConnector) {
+        doConnect(w, wcConnector);
+        onClose(); // laisse la modale WalletConnect (QR wc:) prendre le relais
+      }
       // sinon -> showPhoneQR
     }
   };
