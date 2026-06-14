@@ -28,8 +28,8 @@ import { usd2, groupInt, num1, hfColor, hfLabel } from "@/lib/format";
 
 /* ---------- position réelle ---------- */
 function PositionPanel() {
-  const { collateral, debt, healthFactor, price, buffer, policyActive } = useWard();
-  const thr = LIQ_THRESHOLD;
+  const { collateral, debt, healthFactor, price, buffer, policyActive, thresholdBps } = useWard();
+  const thr = thresholdBps > 0 ? thresholdBps / 10000 : LIQ_THRESHOLD;
   const armed = policyActive && buffer > 0;
   const liqPrice = collateral > 0 && debt > 0 ? debt / (collateral * thr) : 0;
   const protectedPrice =
@@ -102,7 +102,8 @@ function PositionPanel() {
 
 /* ---------- armer / régler Ward ---------- */
 function ArmWard() {
-  const { debt, buffer, triggerHF, targetHF, usdgBalance, collateral, policyActive, refetchAll } = useWard();
+  const { debt, buffer, triggerHF, targetHF, usdgBalance, collateral, policyActive, thresholdBps, refetchAll } = useWard();
+  const thr = thresholdBps > 0 ? thresholdBps / 10000 : LIQ_THRESHOLD;
   const [add, setAdd] = useState(0);
   const [trigger, setTrigger] = useState(1.2);
   const [target, setTarget] = useState(1.5);
@@ -118,7 +119,7 @@ function ArmWard() {
 
   const protectedPrice =
     collateral > 0
-      ? Math.max(debt - (buffer + add), 0) / (collateral * LIQ_THRESHOLD)
+      ? Math.max(debt - (buffer + add), 0) / (collateral * thr)
       : 0;
   const suggested = Math.max(Math.round(debt * 0.4), 0);
 
@@ -290,7 +291,12 @@ function OperatorPanel() {
           toast.success("Ward a protégé ta position", { description: `HF ${Number(j.hfBefore).toFixed(2)} → ${Number(j.hfAfter).toFixed(2)}` });
           refetchAll();
         } else if (j.status === "cannot_protect") {
-          setKeeper("Buffer insuffisant — réalimente le buffer");
+          const r = String(j.reason || "").toLowerCase();
+          setKeeper(
+            r.includes("buffer") || r.includes("restore") || r.includes("liquidation")
+              ? "Buffer insuffisant — réalimente le buffer"
+              : "surveille ta position",
+          );
         } else if (j.status === "healthy") {
           setKeeper("surveille ta position");
         }

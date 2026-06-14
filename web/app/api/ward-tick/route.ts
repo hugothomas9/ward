@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createWalletClient, createPublicClient, http, isAddress } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
+import { privateKeyToAccount, nonceManager } from "viem/accounts";
 import { robinhoodTestnet } from "@/lib/chain";
 import { ADDR } from "@/lib/contracts";
 import { wardVaultAbi, lendingCoreAbi } from "@/lib/abi";
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
   if (hf >= trigger) return NextResponse.json({ status: "healthy", hf: hfNum, trigger: triggerNum });
 
   // HF < trigger -> on tente de protéger
-  const account = privateKeyToAccount((key.startsWith("0x") ? key : `0x${key}`) as `0x${string}`);
+  const account = privateKeyToAccount((key.startsWith("0x") ? key : `0x${key}`) as `0x${string}`, { nonceManager });
   const wallet = createWalletClient({ account, chain: robinhoodTestnet, transport: http() });
 
   try {

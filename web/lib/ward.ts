@@ -72,8 +72,9 @@ export const DEPLOYMENTS = {
   chainName: "Robinhood Chain (testnet)",
   explorer: "https://explorer.testnet.chain.robinhood.com",
   contracts: [
-    { name: "LendingCore", addr: "0x55994C3D261dc2c0CE9348530090e81663020aa5" },
-    { name: "WardVault", addr: "0x1e9F327fAaa14BB2Dc41B2A0080317547788bF1D" },
+    { name: "LendingCore", addr: "0x193C18301695d38Faf9393887c3a6a2A69A7783b" },
+    { name: "WardVault", addr: "0x72FabE6972BfF5F21D208701bC59e94A29F05558" },
+    { name: "USDG (mintable)", addr: "0x7d6ac1CBC33d15B5A6d7371d59d501c1CF6acd64" },
     { name: "DynamicRiskModel", addr: "0x4bAD15Dc970519486D13EF830A0544b2D236e3dF" },
     { name: "RiskEngine (Stylus)", addr: "0x65d5dc0C78b390b50aBd1f62F0F8F2e5AF18db13" },
     { name: "PriceHistory", addr: "0xBe61f02a744Bb55a2577e877BD4C0A7Fe160d1e2" },
