@@ -13,7 +13,7 @@ export const hfColor = (hf: number) =>
   hf < 1 ? "var(--danger)" : hf < 1.2 ? "var(--warn)" : "var(--ward)";
 
 export const hfLabel = (hf: number) =>
-  hf < 1 ? "À risque" : hf < 1.2 ? "Limite" : "Sain";
+  hf < 1 ? "At risk" : hf < 1.2 ? "Tight" : "Healthy";
 
 export const shortAddr = (a: string) =>
   a.length > 10 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a;

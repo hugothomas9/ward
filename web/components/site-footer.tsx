@@ -8,10 +8,10 @@ export function SiteFooter() {
           Ward
         </span>
         <span className="hidden sm:inline">·</span>
-        <span>Crédit anti-liquidation sur {DEPLOYMENTS.chainName}</span>
+        <span>Anti-liquidation credit on {DEPLOYMENTS.chainName}</span>
         <span className="font-mono tnum sm:ml-auto">
-          chain {DEPLOYMENTS.chainId} · {DEPLOYMENTS.contracts.length} contrats
-          live
+          chain {DEPLOYMENTS.chainId} · {DEPLOYMENTS.contracts.length} live
+          contracts
         </span>
       </div>
     </footer>

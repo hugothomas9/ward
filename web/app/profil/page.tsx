@@ -21,10 +21,10 @@ export default function ProfilPage() {
           <Wallet className="h-6 w-6" />
         </div>
         <h1 className="font-serif text-3xl font-semibold tracking-tight">
-          Aucun wallet connecté
+          No wallet connected
         </h1>
         <p className="text-sm text-muted-foreground">
-          Connecte-toi pour voir ton profil, tes soldes et le réseau.
+          Connect to see your profile, balances and network.
         </p>
         <ConnectButton big />
       </div>
@@ -35,14 +35,14 @@ export default function ProfilPage() {
     if (!address) return;
     navigator.clipboard?.writeText(address);
     setCopied(true);
-    toast.success("Adresse copiée");
+    toast.success("Address copied");
     window.setTimeout(() => setCopied(false), 1500);
   };
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-10">
       <Reveal>
-        <h1 className="font-serif text-4xl font-semibold tracking-tight">Profil</h1>
+        <h1 className="font-serif text-4xl font-semibold tracking-tight">Profile</h1>
       </Reveal>
 
       <div className="mt-8 grid gap-5 md:grid-cols-2">
@@ -68,7 +68,7 @@ export default function ProfilPage() {
               <button
                 onClick={copy}
                 className="ml-auto text-muted-foreground transition-colors hover:text-foreground"
-                aria-label="Copier l'adresse"
+                aria-label="Copy address"
               >
                 {copied ? (
                   <Check className="h-4 w-4 text-ward" />
@@ -94,11 +94,11 @@ export default function ProfilPage() {
             <button
               onClick={() => {
                 disconnect();
-                toast("Wallet déconnecté");
+                toast("Wallet disconnected");
               }}
               className="mt-4 flex w-full items-center justify-center gap-2 rounded-md border border-hairline py-2.5 text-sm font-medium text-foreground transition-colors hover:border-danger/40 hover:text-danger"
             >
-              <LogOut className="h-4 w-4" /> Déconnecter
+              <LogOut className="h-4 w-4" /> Disconnect
             </button>
           </div>
         </Reveal>
@@ -114,7 +114,7 @@ export default function ProfilPage() {
         <div className="mt-5 rounded-xl border border-hairline bg-paper p-6">
           <div className="flex items-center justify-between">
             <div className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
-              Contrats déployés · {DEPLOYMENTS.chainName}
+              Deployed contracts · {DEPLOYMENTS.chainName}
             </div>
             <a
               href={DEPLOYMENTS.explorer}

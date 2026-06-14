@@ -4,9 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
 import { ConnectButton } from "@/components/connect";
+import { useWard } from "@/components/ward-provider";
 
 function WardMark({ className = "" }: { className?: string }) {
-  // précision figée : évite tout mismatch d'hydratation sur les flottants trig
+  // fixed precision: avoids any hydration mismatch on the trig floats
   const r3 = (n: number) => Number(n.toFixed(3));
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden>
@@ -32,14 +33,16 @@ function WardMark({ className = "" }: { className?: string }) {
 }
 
 const TABS = [
-  { label: "Accueil", href: "/" },
+  { label: "Home", href: "/" },
   { label: "Trading", href: "/trading" },
   { label: "Ward", href: "/ward" },
-  { label: "Profil", href: "/profil" },
+  { label: "About", href: "/about" },
+  { label: "Profile", href: "/profil" },
 ] as const;
 
 export function SiteNav() {
   const pathname = usePathname();
+  const { connected } = useWard();
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
@@ -81,7 +84,7 @@ export function SiteNav() {
         </nav>
 
         <div className="ml-auto">
-          <ConnectButton />
+          {connected && <ConnectButton />}
         </div>
       </div>
     </header>

@@ -34,7 +34,7 @@ const WALLETS: WalletDef[] = [
   {
     kind: "robinhood",
     name: "Robinhood Wallet",
-    desc: "Natif sur Robinhood Chain · app mobile",
+    desc: "Native on Robinhood Chain · mobile app",
     recommended: true,
     mask: "/wallets/robinhood.svg",
     color: "#00C805",
@@ -42,7 +42,7 @@ const WALLETS: WalletDef[] = [
   {
     kind: "metamask",
     name: "MetaMask",
-    desc: "Extension navigateur",
+    desc: "Browser extension",
     img: "/wallets/metamask.svg",
   },
 ];
@@ -78,18 +78,18 @@ function WalletModal({ onClose }: { onClose: () => void }) {
   const { isConnected } = useAccount();
   const [selected, setSelected] = useState<WalletDef | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  // URL publique : env (tunnel/Vercel) sinon l'origine courante. Le QR ne s'affiche
-  // que dans la modale (client), donc window est défini à ce moment-là.
+  // public URL: env (tunnel/Vercel) otherwise the current origin. The QR only renders
+  // inside the modal (client), so window is defined at that point.
   const siteUrl =
     process.env.NEXT_PUBLIC_APP_URL ||
     (typeof window !== "undefined" ? window.location.origin : "");
 
-  // ferme la modale dès que la connexion réelle aboutit
+  // close the modal as soon as the real connection succeeds
   useEffect(() => {
     if (isConnected) onClose();
   }, [isConnected, onClose]);
 
-  // ciblage par nom (EIP-6963) : on ne confond jamais MetaMask et Robinhood
+  // targeting by name (EIP-6963): we never confuse MetaMask and Robinhood
   const metamaskConnector =
     connectors.find((c) => /metamask/i.test(c.name)) ??
     connectors.find((c) => c.id === "injected" || c.type === "injected");
@@ -101,7 +101,7 @@ function WalletModal({ onClose }: { onClose: () => void }) {
       { connector, chainId: robinhoodTestnet.id },
       {
         onSuccess: () => {
-          toast.success(`${w.name} connecté`, {
+          toast.success(`${w.name} connected`, {
             description: "Robinhood Chain · testnet (46630)",
           });
           onClose();
@@ -115,16 +115,16 @@ function WalletModal({ onClose }: { onClose: () => void }) {
     setErr(null);
     if (w.kind === "metamask") {
       if (metamaskConnector) doConnect(w, metamaskConnector);
-      else setErr("MetaMask introuvable — installe l'extension du navigateur.");
+      else setErr("MetaMask not found — install the browser extension.");
     } else {
-      // Robinhood : provider in-app si présent, sinon WalletConnect (QR à scanner
-      // avec l'app), sinon repli QR "ouvre sur ton téléphone"
+      // Robinhood: in-app provider if present, otherwise WalletConnect (QR to scan
+      // with the app), otherwise QR fallback "open on your phone"
       if (robinhoodConnector) doConnect(w, robinhoodConnector);
       else if (wcConnector) {
         doConnect(w, wcConnector);
-        onClose(); // laisse la modale WalletConnect (QR wc:) prendre le relais
+        onClose(); // let the WalletConnect modal (QR wc:) take over
       }
-      // sinon -> showPhoneQR
+      // otherwise -> showPhoneQR
     }
   };
 
@@ -154,7 +154,7 @@ function WalletModal({ onClose }: { onClose: () => void }) {
           <button
             onClick={onClose}
             className="absolute right-4 top-4 text-muted-foreground transition-colors hover:text-foreground"
-            aria-label="Fermer"
+            aria-label="Close"
           >
             <X className="h-4 w-4" />
           </button>
@@ -177,7 +177,7 @@ function WalletModal({ onClose }: { onClose: () => void }) {
                 transition={{ duration: 0.18 }}
               >
                 <h2 className="mt-3 font-serif text-2xl font-semibold tracking-tight">
-                  Connecte ton wallet
+                  Connect your wallet
                 </h2>
                 <div className="mt-5 space-y-2.5">
                   {WALLETS.map((w, i) => (
@@ -197,7 +197,7 @@ function WalletModal({ onClose }: { onClose: () => void }) {
                           <span className="text-sm font-medium">{w.name}</span>
                           {w.recommended && (
                             <span className="rounded-full bg-ward/10 px-1.5 py-0.5 font-mono text-[9px] font-medium uppercase tracking-wider text-ward">
-                              Recommandé
+                              Recommended
                             </span>
                           )}
                         </span>
@@ -225,17 +225,17 @@ function WalletModal({ onClose }: { onClose: () => void }) {
                   }}
                   className="mt-3 inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  <ChevronLeft className="h-3.5 w-3.5" /> Retour
+                  <ChevronLeft className="h-3.5 w-3.5" /> Back
                 </button>
 
                 {showPhoneQR ? (
                   <div className="mt-3 flex flex-col items-center text-center">
                     <h2 className="font-serif text-xl font-semibold tracking-tight">
-                      Ouvre Ward sur ton téléphone
+                      Open Ward on your phone
                     </h2>
                     <p className="mt-1 max-w-[17rem] text-xs text-muted-foreground">
-                      Scanne ce code, ouvre le lien dans le navigateur de l&apos;app
-                      Robinhood Wallet, puis connecte-toi.
+                      Scan this code, open the link in the Robinhood Wallet
+                      app&apos;s browser, then connect.
                     </p>
                     <div className="mt-4 rounded-xl border border-hairline bg-paper p-4">
                       {siteUrl && (
@@ -262,10 +262,10 @@ function WalletModal({ onClose }: { onClose: () => void }) {
                       <WalletLogo w={selected} size={10} />
                     </span>
                     <h2 className="mt-4 font-serif text-xl font-semibold tracking-tight">
-                      Ouvre {selected.name}
+                      Open {selected.name}
                     </h2>
                     <p className="mt-1 max-w-[16rem] text-xs text-muted-foreground">
-                      Approuve la connexion dans {selected.name}.
+                      Approve the connection in {selected.name}.
                     </p>
                     <div className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-secondary/50 py-2.5 text-xs text-muted-foreground">
                       <Loader2
@@ -273,13 +273,13 @@ function WalletModal({ onClose }: { onClose: () => void }) {
                           "h-3.5 w-3.5 text-ward " + (pending ? "animate-spin" : "")
                         }
                       />
-                      {pending ? "En attente d'approbation…" : "Prêt"}
+                      {pending ? "Waiting for approval…" : "Ready"}
                     </div>
                     <button
                       onClick={() => pick(selected)}
                       className="mt-3 w-full rounded-md bg-foreground py-2.5 text-sm font-medium text-background transition-all hover:brightness-110 active:scale-[0.98]"
                     >
-                      Réessayer
+                      Retry
                     </button>
                   </div>
                 )}
@@ -315,7 +315,7 @@ export function ConnectButton({ big = false }: { big?: boolean }) {
             <span className="relative inline-flex h-2 w-2 rounded-full bg-ward" />
           </span>
           <span className="font-mono text-xs text-muted-foreground tnum">
-            {address ? shortAddr(address) : "connecté"}
+            {address ? shortAddr(address) : "connected"}
           </span>
         </a>
       ) : (
@@ -327,7 +327,7 @@ export function ConnectButton({ big = false }: { big?: boolean }) {
           }
         >
           <Wallet className={big ? "h-4 w-4" : "h-3.5 w-3.5"} />
-          Connecter le wallet
+          Connect wallet
         </button>
       )}
 

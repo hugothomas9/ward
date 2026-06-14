@@ -36,7 +36,7 @@ export function FaucetPanel() {
     if (!address) return;
     navigator.clipboard?.writeText(address);
     setCopied(true);
-    toast.success("Adresse copiée");
+    toast.success("Address copied");
     window.setTimeout(() => setCopied(false), 1500);
   };
 
@@ -53,7 +53,7 @@ export function FaucetPanel() {
       const amt = parseUnits(String(MINT_AMOUNT), USDG_DECIMALS);
       await sendTx(
         { address: ADDR.usdg, abi: erc20Abi, functionName: "mint", args: [address, amt] },
-        { pending: `Mint de ${groupInt(MINT_AMOUNT)} USDG…`, success: `${groupInt(MINT_AMOUNT)} USDG reçus` },
+        { pending: `Minting ${groupInt(MINT_AMOUNT)} USDG…`, success: `${groupInt(MINT_AMOUNT)} USDG received` },
       );
       refetchAll();
     } catch {
@@ -67,7 +67,7 @@ export function FaucetPanel() {
       <div className="flex items-center gap-2">
         <Droplets className="h-4 w-4 text-ward" />
         <h2 className="font-serif text-xl font-semibold tracking-tight">
-          Faucet — crédite ton wallet de test
+          Faucet — fund your test wallet
         </h2>
       </div>
 
@@ -78,7 +78,7 @@ export function FaucetPanel() {
         <button
           onClick={copy}
           className="text-muted-foreground transition-colors hover:text-foreground"
-          aria-label="Copier"
+          aria-label="Copy"
         >
           {copied ? <Check className="h-4 w-4 text-ward" /> : <Copy className="h-4 w-4" />}
         </button>
@@ -86,19 +86,19 @@ export function FaucetPanel() {
 
       <div className="mt-4 flex items-center justify-between">
         <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
-          Soldes on-chain
+          On-chain balances
         </span>
         <button
           onClick={refresh}
           className="inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
         >
           <RefreshCw className={"h-3.5 w-3.5 " + (spin ? "animate-spin" : "")} />
-          Rafraîchir
+          Refresh
         </button>
       </div>
       <div className="mt-2 grid grid-cols-3 gap-3">
         <Bal label="Gas" value={ethBalance} unit="ETH" />
-        <Bal label="Collatéral" value={tslaBalance} unit="TSLA" />
+        <Bal label="Collateral" value={tslaBalance} unit="TSLA" />
         <Bal label="Stable" value={usdgBalance} unit="USDG" />
       </div>
 
@@ -110,7 +110,7 @@ export function FaucetPanel() {
               Gas (ETH) + TSLA <ExternalLink className="h-3 w-3" />
             </a>
             <span className="block text-xs text-muted-foreground">
-              Faucet officiel Robinhood Chain : 0.05 ETH + 5 TSLA / 24 h.
+              Official Robinhood Chain faucet: 0.05 ETH + 5 TSLA / 24h.
             </span>
           </span>
         </li>
@@ -122,10 +122,10 @@ export function FaucetPanel() {
               disabled={busy || !address}
               className="rounded-md bg-foreground px-3.5 py-1.5 text-xs font-medium text-background transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-40"
             >
-              {busy ? "Mint en cours…" : `Mint ${groupInt(MINT_AMOUNT)} USDG`}
+              {busy ? "Minting…" : `Mint ${groupInt(MINT_AMOUNT)} USDG`}
             </button>
             <span className="mt-1 block text-xs text-muted-foreground">
-              USDG de testnet, mintable directement ici (transaction réelle).
+              Testnet USDG, mintable right here (real transaction).
             </span>
           </span>
         </li>

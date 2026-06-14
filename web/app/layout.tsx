@@ -28,9 +28,9 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ward — crédit anti-liquidation",
+  title: "Ward — anti-liquidation credit",
   description:
-    "Ligne de crédit adossée aux actions tokenisées, avec un autopilote anti-liquidation, sur Robinhood Chain.",
+    "A credit line backed by tokenized stocks, with an anti-liquidation autopilot, on Robinhood Chain.",
 };
 
 export default function RootLayout({
@@ -38,7 +38,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
-      lang="fr"
+      lang="en"
       className={`${fraunces.variable} ${hanken.variable} ${plexMono.variable} h-full`}
     >
       <body className="min-h-full">

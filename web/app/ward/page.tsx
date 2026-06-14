@@ -40,14 +40,14 @@ function PositionPanel() {
   return (
     <div className="rounded-xl border border-hairline bg-paper p-6">
       <div className="flex items-center justify-between">
-        <h2 className="font-serif text-xl font-semibold tracking-tight">Ta position</h2>
+        <h2 className="font-serif text-xl font-semibold tracking-tight">Your position</h2>
         {armed ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-ward/10 px-2.5 py-1 font-mono text-[11px] font-medium uppercase tracking-wider text-ward">
-            <ShieldCheck className="h-3.5 w-3.5" /> Ward armé
+            <ShieldCheck className="h-3.5 w-3.5" /> Ward armed
           </span>
         ) : (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-2.5 py-1 font-mono text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-            <ShieldOff className="h-3.5 w-3.5" /> Ward inactif
+            <ShieldOff className="h-3.5 w-3.5" /> Ward inactive
           </span>
         )}
       </div>
@@ -73,20 +73,20 @@ function PositionPanel() {
 
       <dl className="mt-6 grid grid-cols-2 gap-4 border-t border-hairline pt-5 text-sm sm:grid-cols-4">
         <div>
-          <dt className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Collatéral</dt>
+          <dt className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Collateral</dt>
           <dd className="mt-1 font-medium tnum">{collateral} TSLA</dd>
         </div>
         <div>
-          <dt className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Dette</dt>
+          <dt className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Debt</dt>
           <dd className="mt-1 font-medium tnum">{groupInt(debt)} USDG</dd>
         </div>
         <div>
-          <dt className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Buffer Ward</dt>
+          <dt className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Ward buffer</dt>
           <dd className="mt-1 font-medium tnum">{groupInt(buffer)} USDG</dd>
         </div>
         <div>
           <dt className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-            <TrendingDown className="h-3 w-3" /> {armed ? "Protégé jusqu'à" : "Liquidation"}
+            <TrendingDown className="h-3 w-3" /> {armed ? "Protected down to" : "Liquidation"}
           </dt>
           <dd className="mt-1 font-medium tnum" style={{ color: armed ? "var(--ward)" : "var(--danger)" }}>
             {usd2(armed ? protectedPrice : liqPrice)}
@@ -94,7 +94,7 @@ function PositionPanel() {
         </div>
       </dl>
       <p className="mt-3 font-mono text-[11px] text-muted-foreground">
-        Cours TSLA on-chain : {usd2(price)}
+        On-chain TSLA price: {usd2(price)}
       </p>
     </div>
   );
@@ -128,8 +128,8 @@ function ArmWard() {
     setBusy(true);
     try {
       const amt = parseUnits(String(add), USDG_DECIMALS);
-      await sendTx({ address: ADDR.usdg, abi: erc20Abi, functionName: "approve", args: [ADDR.wardVault, amt] }, { pending: "Approbation USDG…", success: "USDG approuvé" });
-      await sendTx({ address: ADDR.wardVault, abi: wardVaultAbi, functionName: "fund", args: [amt] }, { pending: "Alimentation du buffer…", success: "Buffer alimenté" });
+      await sendTx({ address: ADDR.usdg, abi: erc20Abi, functionName: "approve", args: [ADDR.wardVault, amt] }, { pending: "Approving USDG…", success: "USDG approved" });
+      await sendTx({ address: ADDR.wardVault, abi: wardVaultAbi, functionName: "fund", args: [amt] }, { pending: "Funding buffer…", success: "Buffer funded" });
       refetchAll();
       setAdd(0);
     } catch {} finally { setBusy(false); }
@@ -141,7 +141,7 @@ function ArmWard() {
     try {
       const tw = parseUnits(trigger.toFixed(2), 18);
       const gw = parseUnits(Math.max(target, trigger).toFixed(2), 18);
-      await sendTx({ address: ADDR.wardVault, abi: wardVaultAbi, functionName: "setPolicy", args: [tw, gw, ADDR.deployer] }, { pending: "Activation de Ward…", success: "Ward activé sur ta position" });
+      await sendTx({ address: ADDR.wardVault, abi: wardVaultAbi, functionName: "setPolicy", args: [tw, gw, ADDR.deployer] }, { pending: "Activating Ward…", success: "Ward activated on your position" });
       refetchAll();
     } catch {} finally { setBusy(false); }
   };
@@ -154,7 +154,7 @@ function ArmWard() {
       const w = parseUnits(value.toFixed(6), USDG_DECIMALS);
       await sendTx(
         { address: ADDR.wardVault, abi: wardVaultAbi, functionName: "defund", args: [w] },
-        { pending: "Retrait du buffer…", success: all ? "Ward désarmé · buffer récupéré" : "Buffer récupéré" },
+        { pending: "Withdrawing buffer…", success: all ? "Ward disarmed · buffer withdrawn" : "Buffer withdrawn" },
       );
       refetchAll();
       setDefundAmt(0);
@@ -166,20 +166,20 @@ function ArmWard() {
       <div className="flex items-center gap-2">
         <ShieldCheck className="h-4 w-4 text-ward" />
         <h2 className="font-serif text-xl font-semibold tracking-tight">
-          {policyActive ? "Régler Ward" : "Activer Ward"}
+          {policyActive ? "Configure Ward" : "Activate Ward"}
         </h2>
       </div>
       <p className="mt-1 text-xs text-muted-foreground">
-        1. Alimente ton buffer en USDG. 2. Choisis tes seuils et active. Le keeper
-        protégera ta position si le HF passe sous le trigger.
+        1. Fund your buffer with USDG. 2. Pick your thresholds and activate. The keeper
+        will protect your position if HF drops below the trigger.
       </p>
 
       {policyActive && buffer === 0 && (
         <div className="mt-4 flex items-start gap-2.5 rounded-md border border-warn/40 bg-warn/10 px-3.5 py-3 text-sm">
           <ShieldOff className="mt-0.5 h-4 w-4 shrink-0 text-warn" />
           <span className="text-foreground/80">
-            Ward est armé <b>mais ton buffer est vide</b> — il ne pourra rien
-            rembourser. Alimente-le ci-dessous pour qu&apos;il soit opérationnel.
+            Ward is armed <b>but your buffer is empty</b> — it can&apos;t repay
+            anything. Fund it below to make it operational.
           </span>
         </div>
       )}
@@ -190,19 +190,19 @@ function ArmWard() {
           <div>
             <div className="flex items-baseline justify-between">
               <label className="text-sm font-medium">
-                Alimenter le buffer <span className="text-muted-foreground">(actuel {groupInt(buffer)})</span>
+                Fund the buffer <span className="text-muted-foreground">(current {groupInt(buffer)})</span>
               </label>
               <span className="font-mono text-sm tnum">+{groupInt(add)} USDG</span>
             </div>
             <Slider className="mt-3" value={[add]} min={0} max={Math.max(Math.round(usdgBalance), suggested, 100)} step={50} onValueChange={(v) => setAdd(num1(v))} />
             <div className="mt-1.5 flex items-center justify-between font-mono text-[11px] text-muted-foreground">
-              <span>Ton USDG : {groupInt(usdgBalance)}</span>
+              <span>Your USDG: {groupInt(usdgBalance)}</span>
               <button onClick={() => setAdd(Math.min(suggested, Math.round(usdgBalance)))} className="text-ward hover:underline">
-                suggéré {groupInt(suggested)}
+                suggested {groupInt(suggested)}
               </button>
             </div>
             <button onClick={fund} disabled={add <= 0 || busy} className="mt-3 w-full rounded-md border border-hairline py-2.5 text-sm font-medium transition-colors hover:border-ward/50 disabled:opacity-40">
-              Alimenter (+{groupInt(add)} USDG)
+              Fund (+{groupInt(add)} USDG)
             </button>
           </div>
 
@@ -224,15 +224,15 @@ function ArmWard() {
 
         <div className="flex flex-col justify-between rounded-lg border border-hairline bg-background p-5">
           <div>
-            <div className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">Avec cette policy</div>
+            <div className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">With this policy</div>
             <p className="mt-3 text-sm leading-relaxed text-foreground/80">
-              Ward protège ta position jusqu&apos;à un prix TSLA de{" "}
+              Ward protects your position down to a TSLA price of{" "}
               <span className="font-mono font-semibold text-ward tnum">{usd2(protectedPrice)}</span>.
             </p>
-            <p className="mt-2 text-xs text-muted-foreground">En dessous, le buffer ne suffit plus — réalimente-le.</p>
+            <p className="mt-2 text-xs text-muted-foreground">Below that, the buffer is no longer enough — top it up.</p>
           </div>
           <button onClick={savePolicy} disabled={busy} className="mt-6 w-full rounded-md bg-foreground py-3 text-sm font-medium text-background transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-40">
-            {policyActive ? "Mettre à jour la policy" : "Activer Ward"}
+            {policyActive ? "Update policy" : "Activate Ward"}
           </button>
         </div>
       </div>
@@ -241,17 +241,17 @@ function ArmWard() {
         <div className="mt-6 border-t border-hairline pt-5">
           <div className="flex items-baseline justify-between">
             <label className="text-sm font-medium">
-              Récupérer le buffer <span className="text-muted-foreground">(dispo {groupInt(buffer)})</span>
+              Withdraw buffer <span className="text-muted-foreground">(available {groupInt(buffer)})</span>
             </label>
             <span className="font-mono text-sm tnum">−{groupInt(defundAmt)} USDG</span>
           </div>
           <Slider className="mt-3" value={[defundAmt]} min={0} max={Math.max(Math.round(buffer), 1)} step={10} onValueChange={(v) => setDefundAmt(num1(v))} />
           <div className="mt-3 flex flex-col gap-2 sm:flex-row">
             <button onClick={() => defund(false)} disabled={defundAmt <= 0 || busy} className="flex-1 rounded-md border border-hairline py-2.5 text-sm font-medium transition-colors hover:border-ward/50 disabled:opacity-40">
-              Récupérer {groupInt(defundAmt)} USDG
+              Withdraw {groupInt(defundAmt)} USDG
             </button>
             <button onClick={() => defund(true)} disabled={busy} className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-md border border-danger/40 py-2.5 text-sm font-medium text-danger transition-colors hover:bg-danger/8 disabled:opacity-40">
-              <ShieldOff className="h-4 w-4" /> Désarmer Ward (tout retirer)
+              <ShieldOff className="h-4 w-4" /> Disarm Ward (withdraw all)
             </button>
           </div>
         </div>
@@ -287,18 +287,18 @@ function OperatorPanel() {
         const j = await res.json();
         if (stop) return;
         if (j.status === "protected") {
-          setKeeper(`Ward a protégé : HF ${Number(j.hfBefore).toFixed(2)} → ${Number(j.hfAfter).toFixed(2)}`);
-          toast.success("Ward a protégé ta position", { description: `HF ${Number(j.hfBefore).toFixed(2)} → ${Number(j.hfAfter).toFixed(2)}` });
+          setKeeper(`Ward protected: HF ${Number(j.hfBefore).toFixed(2)} → ${Number(j.hfAfter).toFixed(2)}`);
+          toast.success("Ward protected your position", { description: `HF ${Number(j.hfBefore).toFixed(2)} → ${Number(j.hfAfter).toFixed(2)}` });
           refetchAll();
         } else if (j.status === "cannot_protect") {
           const r = String(j.reason || "").toLowerCase();
           setKeeper(
             r.includes("buffer") || r.includes("restore") || r.includes("liquidation")
-              ? "Buffer insuffisant — réalimente le buffer"
-              : "surveille ta position",
+              ? "Insufficient buffer — top it up"
+              : "watching your position",
           );
         } else if (j.status === "healthy") {
-          setKeeper("surveille ta position");
+          setKeeper("watching your position");
         }
       } catch {} finally { polling.current = false; }
     };
@@ -313,13 +313,13 @@ function OperatorPanel() {
     try {
       const res = await fetch("/api/crash", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action }) });
       const j = await res.json();
-      if (!res.ok) throw new Error(j.error || "échec");
+      if (!res.ok) throw new Error(j.error || "failed");
       if (j.normalPrice) setNormal(j.normalPrice);
-      toast.success(action === "crash" ? "Prix baissé on-chain (−16%)" : "Prix réinitialisé au cours réel");
+      toast.success(action === "crash" ? "Price dropped on-chain (−16%)" : "Price reset to real value");
       refetchAll();
       window.setTimeout(refetchAll, 1500);
     } catch (e: unknown) {
-      toast.error((e as { message?: string }).message || "échec");
+      toast.error((e as { message?: string }).message || "failed");
     } finally { setBusy(false); }
   };
 
@@ -328,7 +328,7 @@ function OperatorPanel() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <div>
           <div className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
-            Contrôle du prix · opérateur
+            Price control · operator
           </div>
           <div className="mt-1 flex items-baseline gap-2">
             <span className="font-serif text-2xl font-semibold tnum">{usd2(price)}</span>
@@ -337,10 +337,10 @@ function OperatorPanel() {
         </div>
         <div className="flex gap-2 sm:ml-auto">
           <button onClick={() => move("crash")} disabled={busy} className="inline-flex items-center gap-2 rounded-md bg-foreground px-4 py-2.5 text-sm font-medium text-background transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-60">
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />} Baisser −16 %
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />} Drop −16%
           </button>
           <button onClick={() => move("reset")} disabled={busy} className="inline-flex items-center gap-2 rounded-md border border-hairline px-4 py-2.5 text-sm font-medium transition-colors hover:bg-secondary disabled:opacity-60">
-            <RotateCcw className="h-4 w-4" /> Cours réel
+            <RotateCcw className="h-4 w-4" /> Real price
           </button>
         </div>
       </div>
@@ -352,7 +352,7 @@ function OperatorPanel() {
             <span className="relative inline-flex h-2 w-2 rounded-full bg-ward" />
           </span>
           <Activity className="h-3.5 w-3.5" />
-          Keeper Ward actif — {keeper ?? "surveille ta position"}
+          Ward keeper active — {keeper ?? "watching your position"}
         </div>
       )}
     </div>
@@ -360,9 +360,9 @@ function OperatorPanel() {
 }
 
 const STEPS = [
-  { Icon: Wallet, title: "Surveille", body: "Le keeper lit ton health factor en continu, à partir du prix on-chain." },
-  { Icon: TrendingDown, title: "Déclenche", body: "Dès que le HF passe sous ton trigger, Ward agit — avant la liquidation." },
-  { Icon: ShieldCheck, title: "Restaure", body: "Il rembourse depuis ton buffer USDG jusqu'à te ramener au-dessus du seuil." },
+  { Icon: Wallet, title: "Monitors", body: "The keeper reads your health factor continuously, from the on-chain price." },
+  { Icon: TrendingDown, title: "Triggers", body: "As soon as HF drops below your trigger, Ward acts — before liquidation." },
+  { Icon: ShieldCheck, title: "Restores", body: "It repays from your USDG buffer until you're back above the threshold." },
 ];
 
 export default function WardPage() {
@@ -372,23 +372,23 @@ export default function WardPage() {
     <div className="mx-auto max-w-5xl px-6 py-10">
       <Reveal>
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
-          Ward · l&apos;autopilote anti-liquidation
+          Ward · the anti-liquidation autopilot
         </p>
         <h1 className="mt-3 font-serif text-4xl font-semibold tracking-tight sm:text-5xl">
-          Arme Ward sur ta position.
+          Arm Ward on your position.
         </h1>
       </Reveal>
 
       {!connected ? (
         <div className="mt-10 flex flex-col items-center gap-5 rounded-xl border border-hairline bg-paper py-16 text-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-ward/10 text-ward"><Wallet className="h-6 w-6" /></div>
-          <p className="max-w-xs text-sm text-muted-foreground">Connecte ton wallet pour gérer Ward sur ta position.</p>
+          <p className="max-w-xs text-sm text-muted-foreground">Connect your wallet to manage Ward on your position.</p>
           <ConnectButton big />
         </div>
       ) : !hasPosition ? (
         <div className="mt-10 rounded-xl border border-dashed border-hairline bg-paper/50 px-6 py-16 text-center">
-          <p className="text-sm text-muted-foreground">Ouvre d&apos;abord un crédit pour pouvoir armer Ward dessus.</p>
-          <Link href="/trading" className="mt-4 inline-flex items-center gap-1.5 rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background transition-all hover:brightness-110">Ouvrir un crédit</Link>
+          <p className="text-sm text-muted-foreground">Open a credit line first to arm Ward on it.</p>
+          <Link href="/trading" className="mt-4 inline-flex items-center gap-1.5 rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background transition-all hover:brightness-110">Open a credit line</Link>
         </div>
       ) : (
         <div className="mt-8 space-y-5">
@@ -400,7 +400,7 @@ export default function WardPage() {
 
       {/* pédagogie */}
       <Reveal delay={0.05}>
-        <h2 className="mt-16 font-serif text-2xl font-semibold tracking-tight">Comment Ward te protège</h2>
+        <h2 className="mt-16 font-serif text-2xl font-semibold tracking-tight">How Ward protects you</h2>
         <div className="mt-5 grid gap-5 md:grid-cols-3">
           {STEPS.map((s, i) => (
             <div key={s.title} className="rounded-xl border border-hairline bg-paper p-6">
@@ -419,9 +419,9 @@ export default function WardPage() {
         <div className="mt-5 flex items-start gap-3 rounded-xl border border-ward/30 bg-ward/8 p-6">
           <Lock className="mt-0.5 h-5 w-5 shrink-0 text-ward" />
           <div>
-            <h3 className="font-medium">Dé-risquant par construction</h3>
+            <h3 className="font-medium">De-risking by design</h3>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Le keeper n&apos;a accès qu&apos;à <code className="font-mono">protect()</code> : rembourser ta dette depuis ton buffer. Jamais ré-emprunter, swapper, ni ouvrir de position. Invariant vérifié on-chain.
+              The keeper can only call <code className="font-mono">protect()</code>: repay your debt from your buffer. Never re-borrow, swap, or open a position. Invariant verified on-chain.
             </p>
           </div>
         </div>

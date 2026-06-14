@@ -4,7 +4,7 @@ import { wagmiConfig } from "@/lib/wagmi";
 
 type WriteParams = Parameters<typeof writeContract>[1];
 
-/** Envoie une transaction, attend le reçu, gère les toasts. Renvoie le hash. */
+/** Sends a transaction, waits for the receipt, handles the toasts. Returns the hash. */
 export async function sendTx(
   params: WriteParams,
   msg: { pending: string; success: string },
@@ -17,7 +17,7 @@ export async function sendTx(
     return hash;
   } catch (e: unknown) {
     const err = e as { shortMessage?: string; message?: string };
-    toast.error(err.shortMessage || err.message || "Transaction échouée", {
+    toast.error(err.shortMessage || err.message || "Transaction failed", {
       id,
     });
     throw e;
