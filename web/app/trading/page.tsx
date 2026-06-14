@@ -9,7 +9,6 @@ import { useWard } from "@/components/ward-provider";
 import { ConnectButton } from "@/components/connect";
 import { Reveal } from "@/components/reveal";
 import { HealthBar } from "@/components/health-bar";
-import { LiquidityCard } from "@/components/liquidity-card";
 import { Slider } from "@/components/ui/slider";
 import { sendTx } from "@/lib/tx";
 import { ADDR, TSLA_DECIMALS, USDG_DECIMALS } from "@/lib/contracts";
@@ -202,12 +201,6 @@ export default function TradingPage() {
           </div>
         </Reveal>
       </div>
-
-      <Reveal delay={0.14}>
-        <div className="mt-6 max-w-md">
-          <LiquidityCard />
-        </div>
-      </Reveal>
     </div>
   );
 }
