@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { sendTx } from "@/lib/tx";
 import { ADDR, TSLA_DECIMALS, USDG_DECIMALS } from "@/lib/contracts";
 import { erc20Abi, lendingCoreAbi } from "@/lib/abi";
-import { usd, usd2, hfColor, hfLabel, groupInt } from "@/lib/format";
+import { usd2, hfColor, hfLabel, groupInt } from "@/lib/format";
 
 type ActionKey = "deposit" | "borrow" | "repay" | "withdraw";
 const ACTIONS: { key: ActionKey; label: string; token: "TSLA" | "USDG" }[] = [

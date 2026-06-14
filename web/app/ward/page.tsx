@@ -110,8 +110,10 @@ function ArmWard() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
     if (triggerHF > 0) setTrigger(triggerHF);
     if (targetHF > 0) setTarget(Math.max(targetHF, triggerHF));
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [triggerHF, targetHF]);
 
   const protectedPrice =
@@ -274,10 +276,7 @@ function OperatorPanel() {
 
   // keeper : surveille la position et protège si HF < trigger
   useEffect(() => {
-    if (!policyActive || !address) {
-      setKeeper(null);
-      return;
-    }
+    if (!policyActive || !address) return;
     let stop = false;
     const tick = async () => {
       if (polling.current) return;

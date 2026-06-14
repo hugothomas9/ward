@@ -78,13 +78,11 @@ function WalletModal({ onClose }: { onClose: () => void }) {
   const { isConnected } = useAccount();
   const [selected, setSelected] = useState<WalletDef | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [siteUrl, setSiteUrl] = useState("");
-
-  useEffect(() => {
-    const env = process.env.NEXT_PUBLIC_APP_URL;
-    if (env) setSiteUrl(env);
-    else if (typeof window !== "undefined") setSiteUrl(window.location.origin);
-  }, []);
+  // URL publique : env (tunnel/Vercel) sinon l'origine courante. Le QR ne s'affiche
+  // que dans la modale (client), donc window est défini à ce moment-là.
+  const siteUrl =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (typeof window !== "undefined" ? window.location.origin : "");
 
   // ferme la modale dès que la connexion réelle aboutit
   useEffect(() => {
