@@ -7,13 +7,34 @@ import { aggregatorAbi, priceHistoryAbi, dynamicRiskAbi } from "@/lib/abi";
 
 export const runtime = "nodejs";
 
-const CRASH_PRICE = 210n;
-const NORMAL_PRICE = 250n;
+const FALLBACK_PRICE = 406.43;
+const CRASH_FACTOR = 0.84; // -16 %
+
+/** Vrai cours TSLA (Yahoo Finance). Fallback si l'API ne répond pas. */
+async function realTslaPrice(): Promise<number> {
+  try {
+    const r = await fetch(
+      "https://query1.finance.yahoo.com/v8/finance/chart/TSLA?interval=1d&range=1d",
+      { headers: { "User-Agent": "Mozilla/5.0" }, cache: "no-store" },
+    );
+    const j = await r.json();
+    const p = j?.chart?.result?.[0]?.meta?.regularMarketPrice;
+    return typeof p === "number" && p > 0 ? p : FALLBACK_PRICE;
+  } catch {
+    return FALLBACK_PRICE;
+  }
+}
+
+/** GET : prix de référence (vrai cours TSLA) pour le front. */
+export async function GET() {
+  const price = await realTslaPrice();
+  return NextResponse.json({ price });
+}
 
 /**
- * Crash on-chain de démo : le owner (deployer) bouge le feed, puis poke + refresh.
- * Le moteur Stylus recalcule le seuil dynamique pour de vrai.
- * La clé deployer reste côté serveur (jamais exposée au navigateur).
+ * POST : crash de démo on-chain. Le owner (deployer, clé serveur) bouge le feed
+ * puis poke + refresh — le moteur Stylus recalcule le seuil pour de vrai.
+ *   action 'crash' -> prix réel * 0.84   |   'reset' -> prix réel
  */
 export async function POST(req: Request) {
   const key = process.env.DEPLOYER_KEY;
@@ -29,8 +50,9 @@ export async function POST(req: Request) {
     /* défaut crash */
   }
 
-  const price = action === "reset" ? NORMAL_PRICE : CRASH_PRICE;
-  const answer = price * 10n ** 8n; // feed 8 décimales
+  const real = await realTslaPrice();
+  const target = action === "reset" ? real : real * CRASH_FACTOR;
+  const answer = BigInt(Math.round(target * 1e8));
 
   const account = privateKeyToAccount(
     (key.startsWith("0x") ? key : `0x${key}`) as `0x${string}`,
@@ -49,7 +71,6 @@ export async function POST(req: Request) {
     await pub.waitForTransactionReceipt({ hash: h1 });
     tx.updateAnswer = h1;
 
-    // poke : peut révoquer si appelé trop tôt (minInterval) — best-effort
     try {
       const h2 = await wallet.writeContract({
         address: ADDR.priceHistory,
@@ -60,10 +81,9 @@ export async function POST(req: Request) {
       await pub.waitForTransactionReceipt({ hash: h2 });
       tx.poke = h2;
     } catch {
-      /* minInterval/staleness — on continue */
+      /* minInterval — on continue */
     }
 
-    // refresh : le DynamicRiskModel relit l'historique et appelle le moteur Stylus
     try {
       const h3 = await wallet.writeContract({
         address: ADDR.riskModel,
@@ -77,7 +97,13 @@ export async function POST(req: Request) {
       /* rate-limit C1 — on continue */
     }
 
-    return NextResponse.json({ ok: true, price: Number(price), action, tx });
+    return NextResponse.json({
+      ok: true,
+      action,
+      price: Math.round(target * 100) / 100,
+      normalPrice: Math.round(real * 100) / 100,
+      tx,
+    });
   } catch (e: unknown) {
     const err = e as { shortMessage?: string; message?: string };
     return NextResponse.json(

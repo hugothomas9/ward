@@ -19,6 +19,23 @@
 
 Deployer : `0xDA547bb1e6a9ED39c375703A75e13a82FCefc85E`
 
+## Marché DÉMO opérationnel (DeployDemo, 2026-06-14)
+
+> Le vrai USDG Paxos est verrouillé sur le testnet (mint restreint, aucun faucet).
+> Pour un front 100% opérationnel : collatéral = **vrai TSLA**, prix = **cours réel**,
+> dette = **USDG de testnet mintable** (même nom/symbole/6 déc). Réutilise l'oracle,
+> le DynamicRiskModel (Stylus) et l'interestModel d'origine.
+
+| Contrat | Adresse |
+|---|---|
+| **LendingCore** (démo) | `0x193C18301695d38Faf9393887c3a6a2A69A7783b` |
+| **WardVault** (démo) | `0x72FabE6972BfF5F21D208701bC59e94A29F05558` |
+| **USDG** (mintable, "Global Dollar") | `0x7d6ac1CBC33d15B5A6d7371d59d501c1CF6acd64` |
+
+- Pool seedé : **200 000 USDG** de liquidité.
+- Feed calé sur le **cours réel de TSLA** (~$406), resynchronisé par `POST /api/crash`.
+- C'est ce marché que le front (`web/`) utilise.
+
 ## Preuves on-chain (vérifiées par `cast call`)
 
 - `LendingCore.riskModel()` = `0x4bAD15Dc…` (le **DynamicRiskModel**) → câblage F1+F11 prouvé sur la vraie chaîne.
