@@ -6,6 +6,7 @@ import { ADDR } from "@/lib/contracts";
 import { wardVaultAbi, lendingCoreAbi } from "@/lib/abi";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 /**
  * Keeper Ward (serveur) : surveille la position d'un user et appelle protect()

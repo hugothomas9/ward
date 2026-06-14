@@ -6,6 +6,7 @@ import { ADDR } from "@/lib/contracts";
 import { aggregatorAbi, priceHistoryAbi, dynamicRiskAbi } from "@/lib/abi";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 const FALLBACK_PRICE = 406.43;
 const CRASH_FACTOR = 0.84; // -16 %

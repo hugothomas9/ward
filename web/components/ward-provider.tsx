@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
 import {
   useAccount,
   useBalance,
@@ -64,6 +64,11 @@ export function WardProvider({ children }: { children: ReactNode }) {
   const { address, isConnected, connector } = useAccount();
   const { disconnect } = useDisconnect();
   const enabled = isConnected && !!address;
+
+  // garde le feed frais (évite "stale feed" après inactivité). No-op si déjà frais.
+  useEffect(() => {
+    fetch("/api/sync-price").catch(() => {});
+  }, []);
   const q = (extra = true) => ({
     query: { enabled: extra, refetchInterval: 10_000 },
   });
