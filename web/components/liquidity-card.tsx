@@ -26,6 +26,22 @@ export function LiquidityCard() {
   const poolUsdg = pool.data ? Number(pool.data as bigint) / 1e6 : 0;
   const amt = Number(amount) || 0;
   const valid = amt > 0 && amt <= usdgBalance + 1e-9;
+  const low = poolUsdg < 1000;
+
+  // pool suffisamment fourni -> simple ligne d'info (pas besoin de fournir)
+  if (!low) {
+    return (
+      <div className="flex items-center justify-between rounded-xl border border-hairline bg-paper px-5 py-3 text-sm">
+        <span className="flex items-center gap-2 text-muted-foreground">
+          <Layers className="h-4 w-4 text-ward" />
+          Liquidité du pool
+        </span>
+        <span className="font-mono text-sm font-medium tnum text-ward">
+          {groupInt(poolUsdg)} USDG · suffisante ✓
+        </span>
+      </div>
+    );
+  }
 
   const provide = async () => {
     if (!valid || busy) return;
