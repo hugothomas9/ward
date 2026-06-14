@@ -4,6 +4,7 @@ import "./globals.css";
 import { Web3Provider } from "@/components/web3-provider";
 import { WardProvider } from "@/components/ward-provider";
 import { SiteNav } from "@/components/site-nav";
+import { NetworkBanner } from "@/components/network-banner";
 import { SiteFooter } from "@/components/site-footer";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -45,6 +46,7 @@ export default function RootLayout({
           <WardProvider>
             <div className="relative z-10 flex min-h-screen flex-col">
               <SiteNav />
+              <NetworkBanner />
               <main className="flex-1">{children}</main>
               <SiteFooter />
             </div>

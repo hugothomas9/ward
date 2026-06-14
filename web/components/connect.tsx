@@ -15,6 +15,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { useAccount, useConnect } from "wagmi";
 import { toast } from "sonner";
 import { useWard } from "@/components/ward-provider";
+import { robinhoodTestnet } from "@/lib/chain";
 import { shortAddr } from "@/lib/format";
 
 type Kind = "metamask" | "robinhood";
@@ -99,7 +100,7 @@ function WalletModal({ onClose }: { onClose: () => void }) {
 
   const doConnect = (w: WalletDef, connector: (typeof connectors)[number]) =>
     connect(
-      { connector },
+      { connector, chainId: robinhoodTestnet.id },
       {
         onSuccess: () => {
           toast.success(`${w.name} connecté`, {
