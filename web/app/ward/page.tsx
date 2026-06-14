@@ -13,6 +13,7 @@ import {
   Loader2,
   Activity,
   TrendingDown,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useWard } from "@/components/ward-provider";
@@ -23,7 +24,7 @@ import { Slider } from "@/components/ui/slider";
 import { sendTx } from "@/lib/tx";
 import { ADDR, USDG_DECIMALS } from "@/lib/contracts";
 import { erc20Abi, wardVaultAbi } from "@/lib/abi";
-import { LIQ_THRESHOLD } from "@/lib/ward";
+import { LIQ_THRESHOLD, DEPLOYMENTS } from "@/lib/ward";
 import { usd2, groupInt, num1, hfColor, hfLabel } from "@/lib/format";
 
 /* ---------- position réelle ---------- */
@@ -266,6 +267,8 @@ function OperatorPanel() {
   const [busy, setBusy] = useState(false);
   const [normal, setNormal] = useState(0);
   const [keeper, setKeeper] = useState<string | null>(null);
+  const [crashTx, setCrashTx] = useState<string | null>(null);
+  const [protectTx, setProtectTx] = useState<string | null>(null);
   const polling = useRef(false);
 
   useEffect(() => {
@@ -288,6 +291,7 @@ function OperatorPanel() {
         if (stop) return;
         if (j.status === "protected") {
           setKeeper(`Ward protected: HF ${Number(j.hfBefore).toFixed(2)} → ${Number(j.hfAfter).toFixed(2)}`);
+          if (j.tx) setProtectTx(j.tx);
           toast.success("Ward protected your position", { description: `HF ${Number(j.hfBefore).toFixed(2)} → ${Number(j.hfAfter).toFixed(2)}` });
           refetchAll();
         } else if (j.status === "cannot_protect") {
@@ -315,6 +319,13 @@ function OperatorPanel() {
       const j = await res.json();
       if (!res.ok) throw new Error(j.error || "failed");
       if (j.normalPrice) setNormal(j.normalPrice);
+      if (action === "crash") {
+        setCrashTx(j.tx?.updateAnswer ?? null);
+        setProtectTx(null);
+      } else {
+        setCrashTx(null);
+        setProtectTx(null);
+      }
       toast.success(action === "crash" ? "Price dropped on-chain (−16%)" : "Price reset to real value");
       refetchAll();
       window.setTimeout(refetchAll, 1500);
@@ -353,6 +364,36 @@ function OperatorPanel() {
           </span>
           <Activity className="h-3.5 w-3.5" />
           Ward keeper active — {keeper ?? "watching your position"}
+        </div>
+      )}
+
+      {(crashTx || protectTx) && (
+        <div className="mt-3 space-y-2 rounded-lg border border-hairline bg-background px-4 py-3">
+          <div className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            On-chain proof
+          </div>
+          {crashTx && (
+            <a
+              href={`${DEPLOYMENTS.explorer}/tx/${crashTx}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Price crash · updateAnswer + poke + refresh
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
+          {protectTx && (
+            <a
+              href={`${DEPLOYMENTS.explorer}/tx/${protectTx}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 font-mono text-xs font-medium text-ward hover:underline"
+            >
+              Ward protect() — debt repaid from buffer
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
         </div>
       )}
     </div>
