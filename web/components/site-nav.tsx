@@ -36,7 +36,6 @@ const TABS = [
   { label: "Home", href: "/" },
   { label: "Trading", href: "/trading" },
   { label: "Ward", href: "/ward" },
-  { label: "About", href: "/about" },
   { label: "Profile", href: "/profil" },
 ] as const;
 

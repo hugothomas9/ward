@@ -96,7 +96,7 @@ function Landing() {
         </Reveal>
       </section>
 
-      <section className="grid gap-5 md:grid-cols-3">
+      <section className="grid gap-5 pb-20 md:grid-cols-3">
         {FEATURES.map((f, i) => (
           <Reveal key={f.title} delay={0.06 * i}>
             <div className="h-full rounded-xl border border-hairline bg-paper p-6">
@@ -109,24 +109,6 @@ function Landing() {
           </Reveal>
         ))}
       </section>
-
-      <Reveal delay={0.05}>
-        <Link
-          href="/about"
-          className="group mb-20 mt-5 flex items-center gap-4 rounded-xl border border-hairline bg-paper px-6 py-5 transition-all hover:border-ward/40"
-        >
-          <div className="flex-1">
-            <div className="font-serif text-lg font-semibold">
-              New here? See how Ward works.
-            </div>
-            <div className="text-sm text-muted-foreground">
-              The anti-liquidation autopilot, the Stylus risk engine, and why
-              Robinhood Chain — in two minutes.
-            </div>
-          </div>
-          <ArrowRight className="h-5 w-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1" />
-        </Link>
-      </Reveal>
     </div>
   );
 }
