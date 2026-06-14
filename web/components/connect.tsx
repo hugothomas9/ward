@@ -80,7 +80,9 @@ function WalletModal({ onClose }: { onClose: () => void }) {
   const [siteUrl, setSiteUrl] = useState("");
 
   useEffect(() => {
-    if (typeof window !== "undefined") setSiteUrl(window.location.origin);
+    const env = process.env.NEXT_PUBLIC_APP_URL;
+    if (env) setSiteUrl(env);
+    else if (typeof window !== "undefined") setSiteUrl(window.location.origin);
   }, []);
 
   // ferme la modale dès que la connexion réelle aboutit
