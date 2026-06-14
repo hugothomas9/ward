@@ -88,41 +88,43 @@ function WalletModal({ onClose }: { onClose: () => void }) {
     if (isConnected) onClose();
   }, [isConnected, onClose]);
 
-  const injectedAvailable =
-    typeof window !== "undefined" &&
-    typeof (window as { ethereum?: unknown }).ethereum !== "undefined";
+  // ciblage par nom (EIP-6963) : on ne confond jamais MetaMask et Robinhood
+  const metamaskConnector =
+    connectors.find((c) => /metamask/i.test(c.name)) ??
+    connectors.find((c) => c.id === "injected" || c.type === "injected");
+  const robinhoodConnector = connectors.find((c) => /robinhood/i.test(c.name));
+  const wcConnector = connectors.find((c) => c.id === "walletConnect");
+
+  const doConnect = (w: WalletDef, connector: (typeof connectors)[number]) =>
+    connect(
+      { connector },
+      {
+        onSuccess: () => {
+          toast.success(`${w.name} connecté`, {
+            description: "Robinhood Chain · testnet (46630)",
+          });
+          onClose();
+        },
+        onError: (e) => setErr(e.message),
+      },
+    );
 
   const pick = (w: WalletDef) => {
     setSelected(w);
     setErr(null);
-    const injectedC =
-      connectors.find((c) => c.id === "injected" || c.type === "injected") ??
-      connectors[0];
-    const wcC = connectors.find((c) => c.id === "walletConnect");
-
-    if (injectedAvailable && injectedC) {
-      connect(
-        { connector: injectedC },
-        {
-          onSuccess: () => {
-            toast.success(`${w.name} connecté`, {
-              description: "Robinhood Chain · testnet (46630)",
-            });
-            onClose();
-          },
-          onError: (e) => setErr(e.message),
-        },
-      );
-    } else if (w.kind === "robinhood" && wcC) {
-      connect({ connector: wcC }, { onError: (e) => setErr(e.message) });
-    } else if (w.kind === "metamask") {
-      setErr("MetaMask introuvable — installe l'extension du navigateur.");
+    if (w.kind === "metamask") {
+      if (metamaskConnector) doConnect(w, metamaskConnector);
+      else setErr("MetaMask introuvable — installe l'extension du navigateur.");
+    } else {
+      // Robinhood : provider in-app si présent, sinon WalletConnect, sinon QR téléphone
+      if (robinhoodConnector) doConnect(w, robinhoodConnector);
+      else if (wcConnector) doConnect(w, wcConnector);
+      // sinon -> showPhoneQR
     }
-    // robinhood sans injected ni WC -> on montre le QR "ouvre sur ton téléphone"
   };
 
   const showPhoneQR =
-    selected?.kind === "robinhood" && !injectedAvailable;
+    selected?.kind === "robinhood" && !robinhoodConnector && !wcConnector;
   const pending = status === "pending";
 
   return (
